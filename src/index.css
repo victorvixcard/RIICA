@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ===== IDENTIDADE GRUPO ICA — Light Institucional ===== */
+    --background: 60 14% 97%;
+    --foreground: 220 13% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 9%;
+
+    /* Verde institucional escuro — sobriedade BTG/XP */
+    --primary: 145 75% 22%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 145 65% 33%;
+    --primary-deep: 145 90% 14%;
+
+    --secondary: 60 10% 94%;
+    --secondary-foreground: 220 13% 9%;
+
+    --muted: 60 10% 92%;
+    --muted-foreground: 220 9% 45%;
+
+    --accent: 60 10% 94%;
+    --accent-foreground: 220 13% 9%;
+
+    --destructive: 0 72% 50%;
+    --success: 145 75% 32%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 100% 12%;
+
+    /* Superfície escura de contraste — sidebar, footer, lateral de logins */
+    --surface-dark: 220 13% 9%;
+    --surface-dark-foreground: 0 0% 100%;
+
+    /* Cores dos canais de comunicação (gráficos do Dashboard) */
+    --chart-email: 145 75% 22%;
+    --chart-whatsapp: 145 65% 45%;
+    --chart-push: 145 45% 65%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 145 75% 22%;
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+    color: hsl(var(--primary-deep));
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(220 13% 80%);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+}
+
+@layer utilities {
+  .text-gradient-primary {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary-deep)) 0%,
+      hsl(var(--primary)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(hsl(220 13% 9% / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 13% 9% / 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+}
