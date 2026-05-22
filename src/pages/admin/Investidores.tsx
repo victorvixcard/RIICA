@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Papa from "papaparse";
 import {
   Plus,
   Upload,
@@ -10,9 +11,14 @@ import {
   Edit2,
   Trash2,
   Filter,
+  CheckSquare,
+  Square,
+  Tag,
+  XCircle,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { ImportCsvModal } from "@/components/admin/csv/ImportCsvModal";
+import { InvestidorDetalheModal } from "@/components/admin/investidores/InvestidorDetalheModal";
 import {
   useInvestors,
   STATUS_LABEL,
@@ -64,7 +70,6 @@ function fmtData(iso: string) {
 }
 
 function maskCpf(cpf: string) {
-  // 123.456.789-00 → 123.***.***-00
   if (cpf.length < 11) return cpf;
   return cpf.replace(/^(\d{3}\.)\d{3}\.\d{3}(-\d{2})$/, "$1***.***$2");
 }
@@ -83,10 +88,11 @@ export function Investidores() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [pagina, setPagina] = useState(1);
   const [importOpen, setImportOpen] = useState(false);
+  const [detalhe, setDetalhe] = useState<Investidor | null>(null);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
 
   const filtrados = useMemo(() => {
     let arr = state.investidores;
-
     if (busca.trim()) {
       const q = busca.trim().toLowerCase();
       arr = arr.filter(
@@ -97,19 +103,14 @@ export function Investidores() {
           i.whatsapp.includes(q)
       );
     }
-    if (filtroStatus !== "todos") {
-      arr = arr.filter((i) => i.status === filtroStatus);
-    }
-    if (filtroOrigem !== "todos") {
-      arr = arr.filter((i) => i.origem === filtroOrigem);
-    }
+    if (filtroStatus !== "todos") arr = arr.filter((i) => i.status === filtroStatus);
+    if (filtroOrigem !== "todos") arr = arr.filter((i) => i.origem === filtroOrigem);
     if (filtroFaixa !== "todos") {
       const f = FAIXAS[filtroFaixa];
       arr = arr.filter(
         (i) => i.valorInvestido >= f.min && i.valorInvestido < f.max
       );
     }
-
     arr = [...arr].sort((a, b) => {
       let cmp = 0;
       if (sortKey === "nome") cmp = a.nome.localeCompare(b.nome);
@@ -120,9 +121,16 @@ export function Investidores() {
       else if (sortKey === "status") cmp = a.status.localeCompare(b.status);
       return sortDir === "asc" ? cmp : -cmp;
     });
-
     return arr;
-  }, [state.investidores, busca, filtroStatus, filtroOrigem, filtroFaixa, sortKey, sortDir]);
+  }, [
+    state.investidores,
+    busca,
+    filtroStatus,
+    filtroOrigem,
+    filtroFaixa,
+    sortKey,
+    sortDir,
+  ]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
   const paginaAtual = Math.min(pagina, totalPaginas);
@@ -143,9 +151,8 @@ export function Investidores() {
   }, [state.investidores]);
 
   const onSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
       setSortKey(key);
       setSortDir("desc");
     }
@@ -160,15 +167,99 @@ export function Investidores() {
   };
 
   const temFiltro =
-    busca || filtroStatus !== "todos" || filtroOrigem !== "todos" || filtroFaixa !== "todos";
+    busca ||
+    filtroStatus !== "todos" ||
+    filtroOrigem !== "todos" ||
+    filtroFaixa !== "todos";
 
   const onDelete = (i: Investidor) => {
-    if (
-      confirm(`Remover ${i.nome} da base?\n\nEssa ação não pode ser desfeita.`)
-    ) {
+    if (confirm(`Remover ${i.nome} da base?\n\nEssa ação não pode ser desfeita.`)) {
       dispatch({ type: "delete", payload: { id: i.id } });
     }
   };
+
+  // Multi-select
+  const toggleOne = (id: string) => {
+    setSelecionados((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllPage = () => {
+    const idsPagina = paginados.map((i) => i.id);
+    const todosSelecionados = idsPagina.every((id) => selecionados.has(id));
+    setSelecionados((s) => {
+      const next = new Set(s);
+      if (todosSelecionados) idsPagina.forEach((id) => next.delete(id));
+      else idsPagina.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
+  const limparSelecao = () => setSelecionados(new Set());
+
+  const exportarCsv = (apenasSelecionados: boolean) => {
+    const arr = apenasSelecionados
+      ? state.investidores.filter((i) => selecionados.has(i.id))
+      : filtrados;
+    const csv = Papa.unparse(
+      arr.map((i) => ({
+        id: i.id,
+        nome: i.nome,
+        cpf: i.cpf,
+        email: i.email,
+        whatsapp: i.whatsapp,
+        status: i.status,
+        valor_investido: i.valorInvestido,
+        ultimo_contato: i.ultimoContato,
+        origem: i.origem,
+        cadastrado_em: i.criadoEm,
+      }))
+    );
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `investidores-ica-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const aplicarStatusEmLote = (novoStatus: StatusInvestidor) => {
+    if (
+      !confirm(
+        `Aplicar status "${STATUS_LABEL[novoStatus]}" a ${selecionados.size} investidor${selecionados.size === 1 ? "" : "es"}?`
+      )
+    )
+      return;
+    state.investidores
+      .filter((i) => selecionados.has(i.id))
+      .forEach((i) => {
+        dispatch({ type: "update", payload: { ...i, status: novoStatus } });
+      });
+    limparSelecao();
+  };
+
+  const deletarSelecionados = () => {
+    if (
+      !confirm(
+        `Remover ${selecionados.size} investidor${selecionados.size === 1 ? "" : "es"} da base?\n\nEssa ação não pode ser desfeita.`
+      )
+    )
+      return;
+    dispatch({
+      type: "deleteMany",
+      payload: { ids: Array.from(selecionados) },
+    });
+    limparSelecao();
+  };
+
+  const idsPagina = paginados.map((i) => i.id);
+  const todosSelecionadosNaPagina =
+    idsPagina.length > 0 && idsPagina.every((id) => selecionados.has(id));
 
   return (
     <>
@@ -186,7 +277,9 @@ export function Investidores() {
             </button>
             <button
               onClick={() =>
-                alert("Modal de novo investidor vem na E3.3 (CRUD individual)")
+                alert(
+                  "Modal de criação manual será implementado quando o backend chegar"
+                )
               }
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors"
             >
@@ -199,7 +292,7 @@ export function Investidores() {
 
       <main className="flex-1 px-6 lg:px-10 py-8">
         <div className="max-w-[1400px] mx-auto space-y-6">
-          {/* Stats rápidos */}
+          {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-xl border border-border bg-card p-5">
               <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -262,11 +355,11 @@ export function Investidores() {
                 </button>
               )}
               <button
-                onClick={() => alert("Export CSV vem na E3.4")}
+                onClick={() => exportarCsv(false)}
                 className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[12px] font-semibold uppercase tracking-wider text-foreground hover:border-primary hover:text-primary transition-colors"
               >
                 <Download className="h-3.5 w-3.5" />
-                Exportar
+                Exportar filtrados
               </button>
             </div>
 
@@ -348,13 +441,62 @@ export function Investidores() {
             </div>
           </div>
 
+          {/* Barra de ações em lote (sticky quando há seleção) */}
+          {selecionados.size > 0 && (
+            <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 flex flex-wrap items-center gap-3">
+              <div className="text-[13px] font-semibold text-primary">
+                {selecionados.size} selecionado
+                {selecionados.size > 1 ? "s" : ""}
+              </div>
+              <div className="h-5 w-px bg-primary/30" />
+              <button
+                onClick={() => exportarCsv(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-card border border-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                <Download className="h-3 w-3" />
+                Exportar selecionados
+              </button>
+              <BulkStatusBtn aplicar={aplicarStatusEmLote} />
+              <button
+                onClick={deletarSelecionados}
+                className="inline-flex items-center gap-2 rounded-md bg-card border border-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-foreground hover:border-destructive hover:text-destructive transition-colors"
+              >
+                <Trash2 className="h-3 w-3" />
+                Remover
+              </button>
+              <div className="ml-auto">
+                <button
+                  onClick={limparSelecao}
+                  aria-label="Limpar seleção"
+                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  Limpar seleção
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Tabela */}
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border bg-background/40">
-                    <th className="py-3 pl-5 pr-4 font-semibold">
+                    <th className="py-3 pl-5 pr-2 font-semibold w-10">
+                      <button
+                        onClick={toggleAllPage}
+                        aria-label="Selecionar página"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {todosSelecionadosNaPagina ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="py-3 pr-4 font-semibold">
                       <SortBtn
                         active={sortKey === "nome"}
                         dir={sortDir}
@@ -401,91 +543,109 @@ export function Investidores() {
                   {paginados.length === 0 && (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="py-16 text-center text-[13px] text-muted-foreground"
                       >
                         Nenhum investidor encontrado com esses filtros.
                       </td>
                     </tr>
                   )}
-                  {paginados.map((i) => (
-                    <tr
-                      key={i.id}
-                      className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors"
-                    >
-                      <td className="py-3.5 pl-5 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-[12px] shrink-0">
-                            {i.nome
-                              .split(" ")
-                              .map((p) => p[0])
-                              .slice(0, 2)
-                              .join("")
-                              .toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-[13px] font-semibold text-foreground leading-tight">
-                              {i.nome}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground font-mono">
-                              {maskCpf(i.cpf)}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="text-[12px] text-foreground truncate max-w-[180px]">
-                          {i.email}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {i.whatsapp}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={cn(
-                            "inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider",
-                            STATUS_TINT[i.status]
-                          )}
-                        >
-                          {STATUS_LABEL[i.status]}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right text-[13px] font-semibold text-foreground tabular-nums">
-                        {fmtBRL(i.valorInvestido)}
-                      </td>
-                      <td className="py-3.5 px-4 text-[12px] text-muted-foreground tabular-nums">
-                        {fmtData(i.ultimoContato)}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="text-[11px] text-muted-foreground">
-                          {i.origem}
-                        </span>
-                      </td>
-                      <td className="py-3.5 pl-4 pr-5 text-right">
-                        <div className="inline-flex items-center gap-1">
+                  {paginados.map((i) => {
+                    const selecionado = selecionados.has(i.id);
+                    return (
+                      <tr
+                        key={i.id}
+                        className={cn(
+                          "border-b border-border last:border-0 transition-colors",
+                          selecionado ? "bg-primary/5" : "hover:bg-muted/40"
+                        )}
+                      >
+                        <td className="py-3.5 pl-5 pr-2">
                           <button
-                            onClick={() =>
-                              alert(
-                                "Modal de detalhe/edição vem na E3.3"
-                              )
-                            }
-                            aria-label="Ver / Editar"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            onClick={() => toggleOne(i.id)}
+                            aria-label="Selecionar"
+                            className="text-muted-foreground hover:text-primary transition-colors"
                           >
-                            <Edit2 className="h-3.5 w-3.5" />
+                            {selecionado ? (
+                              <CheckSquare className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Square className="h-4 w-4" />
+                            )}
                           </button>
+                        </td>
+                        <td className="py-3.5 pr-4">
                           <button
-                            onClick={() => onDelete(i)}
-                            aria-label="Remover"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={() => setDetalhe(i)}
+                            className="flex items-center gap-3 text-left group w-full"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-[12px] shrink-0">
+                              {i.nome
+                                .split(" ")
+                                .map((p) => p[0])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[13px] font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+                                {i.nome}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground font-mono">
+                                {maskCpf(i.cpf)}
+                              </div>
+                            </div>
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="text-[12px] text-foreground truncate max-w-[180px]">
+                            {i.email}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {i.whatsapp}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={cn(
+                              "inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider",
+                              STATUS_TINT[i.status]
+                            )}
+                          >
+                            {STATUS_LABEL[i.status]}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right text-[13px] font-semibold text-foreground tabular-nums">
+                          {fmtBRL(i.valorInvestido)}
+                        </td>
+                        <td className="py-3.5 px-4 text-[12px] text-muted-foreground tabular-nums">
+                          {fmtData(i.ultimoContato)}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="text-[11px] text-muted-foreground">
+                            {i.origem}
+                          </span>
+                        </td>
+                        <td className="py-3.5 pl-4 pr-5 text-right">
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              onClick={() => setDetalhe(i)}
+                              aria-label="Ver / Editar"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => onDelete(i)}
+                              aria-label="Remover"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -531,17 +691,57 @@ export function Investidores() {
               </div>
             )}
           </div>
-
-          <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 text-[12px] text-foreground">
-            <strong>Próximas entregas:</strong> criação/edição individual com
-            histórico de comunicações recebidas (E3.3), seleção em lote + export
-            (E3.4).
-          </div>
         </div>
       </main>
 
       <ImportCsvModal open={importOpen} onClose={() => setImportOpen(false)} />
+      <InvestidorDetalheModal
+        investidor={detalhe}
+        open={!!detalhe}
+        onClose={() => setDetalhe(null)}
+      />
     </>
+  );
+}
+
+function BulkStatusBtn({
+  aplicar,
+}: {
+  aplicar: (s: StatusInvestidor) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setAberto(!aberto)}
+        className="inline-flex items-center gap-2 rounded-md bg-card border border-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-foreground hover:border-primary hover:text-primary transition-colors"
+      >
+        <Tag className="h-3 w-3" />
+        Aplicar status
+      </button>
+      {aberto && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setAberto(false)}
+          />
+          <div className="absolute top-full left-0 mt-1 z-20 min-w-[200px] rounded-md border border-border bg-card shadow-elevated overflow-hidden">
+            {STATUS_OPTS.map((s) => (
+              <button
+                key={s}
+                onClick={() => {
+                  aplicar(s);
+                  setAberto(false);
+                }}
+                className="w-full px-3 py-2 text-left text-[12px] text-foreground hover:bg-muted transition-colors"
+              >
+                {STATUS_LABEL[s]}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

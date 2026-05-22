@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 import { useContent } from "@/store/content";
 
 const NAV = [
-  "Governança Corporativa",
-  "Informações Financeiras",
-  "Comunicados, Eventos e Replays",
-  "Ação",
-  "Serviços aos Investidores",
+  { label: "Governança Corporativa", to: "#governanca" },
+  { label: "Informações Financeiras", to: "/demonstracoes" },
+  { label: "Comunicados, Eventos e Replays", to: "#comunicados" },
+  { label: "Ação", to: "#acao" },
+  { label: "Serviços aos Investidores", to: "#servicos" },
 ];
 
 export function Header() {
@@ -91,14 +91,26 @@ export function Header() {
 
         <nav className="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {NAV.map((item) => (
-              <li key={item}>
-                <button className="group inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-foreground/75 hover:text-primary transition-colors">
-                  {item}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50 transition-transform group-hover:rotate-180" />
-                </button>
-              </li>
-            ))}
+            {NAV.map((item) => {
+              const isInternal = item.to.startsWith("/");
+              const inner = (
+                <span className="group inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-foreground/75 hover:text-primary transition-colors">
+                  {item.label}
+                  {!isInternal && (
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50 transition-transform group-hover:rotate-180" />
+                  )}
+                </span>
+              );
+              return (
+                <li key={item.label}>
+                  {isInternal ? (
+                    <Link to={item.to}>{inner}</Link>
+                  ) : (
+                    <button>{inner}</button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <button
             aria-label="Buscar"
