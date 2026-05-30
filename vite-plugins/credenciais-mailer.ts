@@ -1,76 +1,89 @@
 import type { Plugin } from "vite";
-import nodemailer from "nodemailer";
-import { createClient } from "@supabase/supabase-js";
 
 /**
  * Middleware de DEV: POST /api/enviar-credenciais
  * Busca os usuários (papel investidor) pelos e-mails, garante senha provisória
  * e envia o e-mail de credenciais para o Mailpit local (captura, não envia de
  * verdade). É um harness de teste de Fase 1 — em produção o envio será feito
- * por um provedor real (Fase 2) e este endpoint não existe no build.
+ * por uma Edge Function usando Resend (HTTP API).
+ *
+ * apply: "serve" garante que o plugin NÃO roda no build de produção da Vercel
+ * (não tem nodemailer/Mailpit nem SUPABASE_SERVICE_ROLE_KEY em prod).
  */
 export function credenciaisMailer(env: Record<string, string>): Plugin {
-  const SUPABASE_URL = env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
-  const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || "";
-  const SMTP_HOST = env.MAILPIT_SMTP_HOST || "127.0.0.1";
-  const SMTP_PORT = Number(env.MAILPIT_SMTP_PORT || "54325");
-  const PORTAL_URL = "http://localhost:5173";
-
-  const headers = {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
-    "Content-Type": "application/json",
-  };
-
-  const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  // Garante uma conta no Supabase Auth com a senha atual e vincula usuarios.auth_id.
-  async function provisionarAuth(u: {
-    id: string;
-    email: string;
-    nome: string;
-    senha: string;
-    auth_id: string | null;
-  }) {
-    if (u.auth_id) {
-      await admin.auth.admin.updateUserById(u.auth_id, { password: u.senha });
-      return;
-    }
-    const { data, error } = await admin.auth.admin.createUser({
-      email: u.email,
-      password: u.senha,
-      email_confirm: true,
-      user_metadata: { nome: u.nome, papel: "investidor" },
-    });
-    let authId = data?.user?.id ?? null;
-    if (error || !authId) {
-      const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
-      const existing = list?.users?.find(
-        (x) => (x.email || "").toLowerCase() === u.email.toLowerCase()
-      );
-      if (existing) {
-        authId = existing.id;
-        await admin.auth.admin.updateUserById(existing.id, { password: u.senha });
-      }
-    }
-    if (authId) {
-      await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${u.id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ auth_id: authId }),
-      });
-    }
-  }
-
-  const SENHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const gerarSenha = () =>
-    Array.from({ length: 8 }, () => SENHA_CHARS[Math.floor(Math.random() * SENHA_CHARS.length)]).join("");
-
   return {
     name: "credenciais-mailer",
-    configureServer(server) {
+    apply: "serve",
+    async configureServer(server) {
+      const SUPABASE_URL = env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
+      const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+      const SMTP_HOST = env.MAILPIT_SMTP_HOST || "127.0.0.1";
+      const SMTP_PORT = Number(env.MAILPIT_SMTP_PORT || "54325");
+      const PORTAL_URL = "http://localhost:5173";
+
+      if (!SERVICE_KEY) {
+        console.warn(
+          "[credenciais-mailer] SUPABASE_SERVICE_ROLE_KEY não definida — endpoint /api/enviar-credenciais desativado."
+        );
+        return;
+      }
+
+      // Imports dinâmicos: só acontecem quando o dev server sobe.
+      const nodemailer = (await import("nodemailer")).default;
+      const { createClient } = await import("@supabase/supabase-js");
+
+      const headers = {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      };
+
+      const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      // Garante uma conta no Supabase Auth com a senha atual e vincula usuarios.auth_id.
+      async function provisionarAuth(u: {
+        id: string;
+        email: string;
+        nome: string;
+        senha: string;
+        auth_id: string | null;
+      }) {
+        if (u.auth_id) {
+          await admin.auth.admin.updateUserById(u.auth_id, { password: u.senha });
+          return;
+        }
+        const { data, error } = await admin.auth.admin.createUser({
+          email: u.email,
+          password: u.senha,
+          email_confirm: true,
+          user_metadata: { nome: u.nome, papel: "investidor" },
+        });
+        let authId = data?.user?.id ?? null;
+        if (error || !authId) {
+          const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
+          const existing = list?.users?.find(
+            (x) => (x.email || "").toLowerCase() === u.email.toLowerCase()
+          );
+          if (existing) {
+            authId = existing.id;
+            await admin.auth.admin.updateUserById(existing.id, { password: u.senha });
+          }
+        }
+        if (authId) {
+          await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${u.id}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ auth_id: authId }),
+          });
+        }
+      }
+
+      const SENHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const gerarSenha = () =>
+        Array.from({ length: 8 }, () => SENHA_CHARS[Math.floor(Math.random() * SENHA_CHARS.length)]).join("");
+
       server.middlewares.use("/api/enviar-credenciais", async (req, res) => {
         if (req.method !== "POST") {
           res.statusCode = 405;
