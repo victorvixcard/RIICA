@@ -1,10 +1,15 @@
+// Arquivo de contexto: co-loca provider, hook e constantes/tipos do domínio.
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useReducer,
+  useState,
   type ReactNode,
 } from "react";
+import * as investidoresApi from "@/lib/api/investidores";
+import { useAuth } from "./auth";
 
 // ===== Tipos =====
 export type StatusInvestidor =
@@ -113,11 +118,10 @@ interface InvestorState {
 }
 
 const INVESTOR_VERSION = 1;
-const STORAGE_KEY = "ica-investors-store@v1";
 
 const INITIAL_STATE: InvestorState = {
   version: INVESTOR_VERSION,
-  investidores: SEED_INVESTORS,
+  investidores: SEED_INVESTORS, // placeholder até o refetch do DB
 };
 
 type Action =
@@ -135,6 +139,7 @@ function genId() {
     .toUpperCase()}`;
 }
 
+// Reducer puro — atualização OTIMISTA local; refetch reconcilia com o DB.
 function reducer(state: InvestorState, action: Action): InvestorState {
   switch (action.type) {
     case "create":
@@ -179,56 +184,76 @@ function reducer(state: InvestorState, action: Action): InvestorState {
       return { ...state, investidores: [...novos, ...state.investidores] };
     }
     case "reset":
-      return INITIAL_STATE;
+      return state; // refetch recarrega o estado autoritativo
     default:
       return state;
   }
 }
 
-// ===== Persistence =====
-function loadInitial(): InvestorState {
-  if (typeof window === "undefined") return INITIAL_STATE;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return INITIAL_STATE;
-    const parsed = JSON.parse(raw) as InvestorState;
-    if (!parsed.version || parsed.version !== INVESTOR_VERSION)
-      return INITIAL_STATE;
-    return parsed;
-  } catch {
-    return INITIAL_STATE;
+// Persiste a ação no backend (Supabase).
+async function persist(action: Action): Promise<void> {
+  switch (action.type) {
+    case "create":
+      return investidoresApi.createInvestidor(action.payload);
+    case "update":
+      return investidoresApi.updateInvestidor(action.payload);
+    case "delete":
+      return investidoresApi.deleteInvestidor(action.payload.id);
+    case "deleteMany":
+      return investidoresApi.deleteInvestidores(action.payload.ids);
+    case "bulkImport":
+      return investidoresApi.bulkImportInvestidores(action.payload.novos);
+    case "reset":
+      return Promise.resolve();
   }
 }
 
 // ===== Context =====
 interface InvestorContextValue {
   state: InvestorState;
-  dispatch: React.Dispatch<Action>;
+  dispatch: (action: Action) => void;
+  loading: boolean;
+  refetch: () => Promise<void>;
 }
 
 const InvestorContext = createContext<InvestorContextValue | null>(null);
 
 export function InvestorProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, loadInitial);
+  const [state, setState] = useState<InvestorState>(INITIAL_STATE);
+  const [loading, setLoading] = useState(true);
+  const { session } = useAuth();
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* ignore */
-    }
-  }, [state]);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) window.location.reload();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+  const refetch = useCallback(async () => {
+    const investidores = await investidoresApi.getInvestidores();
+    setState({ version: INVESTOR_VERSION, investidores });
   }, []);
 
+  useEffect(() => {
+    // Carrega no mount e recarrega quando a sessão muda (login/logout) —
+    // com RLS, só super_admin enxerga a base completa.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refetch()
+      .catch((err) =>
+        console.error("[investidores] falha ao carregar do Supabase:", err)
+      )
+      .finally(() => setLoading(false));
+  }, [refetch, session?.user?.id]);
+
+  const dispatch = useCallback(
+    (action: Action) => {
+      setState((prev) => reducer(prev, action)); // otimista
+      void persist(action)
+        .then(() => refetch())
+        .catch((err) => {
+          console.error("[investidores] falha ao persistir:", err);
+          void refetch();
+        });
+    },
+    [refetch]
+  );
+
   return (
-    <InvestorContext.Provider value={{ state, dispatch }}>
+    <InvestorContext.Provider value={{ state, dispatch, loading, refetch }}>
       {children}
     </InvestorContext.Provider>
   );

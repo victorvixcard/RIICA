@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileText, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
-import {
-  DRE,
-  BALANCO_ATIVO,
-  BALANCO_PASSIVO,
-  PERIODOS,
-  type LinhaFinanceira,
-} from "@/mock/dreBalanco";
+import { PlaceholderEmBreve } from "@/components/PlaceholderEmBreve";
+import type { LinhaFinanceira, PeriodoFinanceiro } from "@/mock/dreBalanco";
+import { getFinanceiro, type Financeiro } from "@/lib/api/financeiro";
 import { cn } from "@/lib/utils";
 
 type Visao = "dre" | "balanco";
+
+function trimestreDe(periodos: PeriodoFinanceiro[], id: string) {
+  return periodos.find((p) => p.id === id)?.trimestre ?? "";
+}
 
 function fmtMilhares(n: number) {
   if (n === 0) return "—";
@@ -28,10 +28,22 @@ function calcVariacao(atual: number, anterior: number) {
 
 export function Demonstracoes() {
   const [visao, setVisao] = useState<Visao>("dre");
-  const [periodoAtual, setPeriodoAtual] = useState(PERIODOS[0].id);
-  const [comparar, setComparar] = useState(PERIODOS[1].id);
+  const [dados, setDados] = useState<Financeiro | null>(null);
+  const [periodoAtual, setPeriodoAtual] = useState("");
+  const [comparar, setComparar] = useState("");
 
-  const linhas = visao === "dre" ? DRE : [];
+  useEffect(() => {
+    getFinanceiro()
+      .then((f) => {
+        setDados(f);
+        if (f.periodos[0]) setPeriodoAtual(f.periodos[0].id);
+        if (f.periodos[1]) setComparar(f.periodos[1].id);
+      })
+      .catch((e) => console.error("[demonstracoes] erro ao carregar:", e));
+  }, []);
+
+  const periodos = dados?.periodos ?? [];
+  const linhas = visao === "dre" ? dados?.dre ?? [] : [];
   const balanco = visao === "balanco";
 
   return (
@@ -55,6 +67,12 @@ export function Demonstracoes() {
             </p>
           </div>
 
+          {periodos.length === 0 ? (
+            <div className="max-w-md mx-auto py-12">
+              <PlaceholderEmBreve tipo="As demonstrações financeiras" />
+            </div>
+          ) : (
+          <>
           {/* Toggle DRE / Balanço */}
           <div className="flex items-center gap-1 mb-6 border-b border-border">
             <TabBtn
@@ -80,7 +98,7 @@ export function Demonstracoes() {
                 onChange={(e) => setPeriodoAtual(e.target.value)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-[13px] font-semibold text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
               >
-                {PERIODOS.map((p) => (
+                {periodos.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.trimestre}
                   </option>
@@ -96,7 +114,7 @@ export function Demonstracoes() {
                 onChange={(e) => setComparar(e.target.value)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-[13px] font-semibold text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
               >
-                {PERIODOS.filter((p) => p.id !== periodoAtual).map((p) => (
+                {periodos.filter((p) => p.id !== periodoAtual).map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.trimestre}
                   </option>
@@ -124,26 +142,32 @@ export function Demonstracoes() {
           {/* Tabela */}
           {!balanco ? (
             <TabelaFinanceira
-              titulo={`DRE — Comparativo ${PERIODOS.find((p) => p.id === periodoAtual)?.trimestre} vs ${PERIODOS.find((p) => p.id === comparar)?.trimestre}`}
+              titulo={`DRE — Comparativo ${trimestreDe(periodos, periodoAtual)} vs ${trimestreDe(periodos, comparar)}`}
               linhas={linhas}
+              periodos={periodos}
               periodoAtual={periodoAtual}
               comparar={comparar}
             />
           ) : (
             <div className="space-y-8">
               <TabelaFinanceira
-                titulo={`Ativo — ${PERIODOS.find((p) => p.id === periodoAtual)?.trimestre} vs ${PERIODOS.find((p) => p.id === comparar)?.trimestre}`}
-                linhas={BALANCO_ATIVO}
+                titulo={`Ativo — ${trimestreDe(periodos, periodoAtual)} vs ${trimestreDe(periodos, comparar)}`}
+                linhas={dados?.balancoAtivo ?? []}
+                periodos={periodos}
                 periodoAtual={periodoAtual}
                 comparar={comparar}
               />
               <TabelaFinanceira
                 titulo="Passivo + Patrimônio Líquido"
-                linhas={BALANCO_PASSIVO}
+                linhas={dados?.balancoPassivo ?? []}
+                periodos={periodos}
                 periodoAtual={periodoAtual}
                 comparar={comparar}
               />
             </div>
+          )}
+
+          </>
           )}
 
           {/* Footer informativo */}
@@ -197,11 +221,13 @@ function TabBtn({
 function TabelaFinanceira({
   titulo,
   linhas,
+  periodos,
   periodoAtual,
   comparar,
 }: {
   titulo: string;
   linhas: LinhaFinanceira[];
+  periodos: PeriodoFinanceiro[];
   periodoAtual: string;
   comparar: string;
 }) {
@@ -221,10 +247,10 @@ function TabelaFinanceira({
             <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
               <th className="px-5 py-3 font-semibold">Conta</th>
               <th className="px-4 py-3 font-semibold text-right">
-                {PERIODOS.find((p) => p.id === periodoAtual)?.trimestre}
+                {periodos.find((p) => p.id === periodoAtual)?.trimestre}
               </th>
               <th className="px-4 py-3 font-semibold text-right">
-                {PERIODOS.find((p) => p.id === comparar)?.trimestre}
+                {periodos.find((p) => p.id === comparar)?.trimestre}
               </th>
               <th className="px-5 py-3 font-semibold text-right w-32">Var.</th>
             </tr>

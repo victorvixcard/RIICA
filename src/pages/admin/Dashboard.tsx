@@ -18,12 +18,15 @@ import {
   YAxis,
 } from "recharts";
 import { Link } from "react-router-dom";
-import { ENVIOS_30D, ATIVIDADES } from "@/mock/kpis";
+import { useEffect, useState } from "react";
+import { ENVIOS_30D, type Atividade } from "@/mock/kpis";
 import {
-  CAMPANHAS,
   CANAL_LABEL,
   STATUS_CAMPANHA_LABEL,
+  type Campanha,
 } from "@/mock/campanhas";
+import { getAtividades } from "@/lib/api/atividades";
+import { getCampanhas } from "@/lib/api/campanhas";
 import { useInvestors } from "@/store/investors";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +46,18 @@ const CHART_COLORS = {
 
 export function DashboardAdmin() {
   const { state: invState } = useInvestors();
+  const [atividades, setAtividades] = useState<Atividade[]>([]);
+  const [campanhas, setCampanhas] = useState<Campanha[]>([]);
+
+  useEffect(() => {
+    getAtividades(5)
+      .then(setAtividades)
+      .catch((e) => console.error("[dashboard] erro ao carregar atividades:", e));
+    getCampanhas()
+      .then(setCampanhas)
+      .catch((e) => console.error("[dashboard] erro ao carregar campanhas:", e));
+  }, []);
+
   const totalAtivos = invState.investidores.filter(
     (i) => i.status === "ativo"
   ).length;
@@ -218,7 +233,7 @@ export function DashboardAdmin() {
                 </Link>
               </div>
               <ul className="space-y-4">
-                {ATIVIDADES.slice(0, 5).map((act) => (
+                {atividades.slice(0, 5).map((act) => (
                   <li key={act.id} className="flex items-start gap-3">
                     <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -278,7 +293,7 @@ export function DashboardAdmin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {CAMPANHAS.map((c) => (
+                  {campanhas.slice(0, 5).map((c) => (
                     <tr
                       key={c.id}
                       className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors"

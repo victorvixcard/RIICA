@@ -15,10 +15,13 @@ import {
   Square,
   Tag,
   XCircle,
+  Mail,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { ImportCsvModal } from "@/components/admin/csv/ImportCsvModal";
 import { InvestidorDetalheModal } from "@/components/admin/investidores/InvestidorDetalheModal";
+import { EnviarCredenciaisModal } from "@/components/admin/investidores/EnviarCredenciaisModal";
+import { NovoInvestidorModal } from "@/components/admin/investidores/NovoInvestidorModal";
 import {
   useInvestors,
   STATUS_LABEL,
@@ -88,6 +91,8 @@ export function Investidores() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [pagina, setPagina] = useState(1);
   const [importOpen, setImportOpen] = useState(false);
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [enviarOpen, setEnviarOpen] = useState(false);
   const [detalhe, setDetalhe] = useState<Investidor | null>(null);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
 
@@ -276,11 +281,7 @@ export function Investidores() {
               Importar CSV
             </button>
             <button
-              onClick={() =>
-                alert(
-                  "Modal de criação manual será implementado quando o backend chegar"
-                )
-              }
+              onClick={() => setNovoOpen(true)}
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors"
             >
               <Plus className="h-4 w-4" />
@@ -360,6 +361,13 @@ export function Investidores() {
               >
                 <Download className="h-3.5 w-3.5" />
                 Exportar filtrados
+              </button>
+              <button
+                onClick={() => setEnviarOpen(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[12px] font-semibold uppercase tracking-wider text-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Enviar credenciais
               </button>
             </div>
 
@@ -455,6 +463,13 @@ export function Investidores() {
               >
                 <Download className="h-3 w-3" />
                 Exportar selecionados
+              </button>
+              <button
+                onClick={() => setEnviarOpen(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-card border border-border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                <Mail className="h-3 w-3" />
+                Enviar credenciais
               </button>
               <BulkStatusBtn aplicar={aplicarStatusEmLote} />
               <button
@@ -695,10 +710,17 @@ export function Investidores() {
       </main>
 
       <ImportCsvModal open={importOpen} onClose={() => setImportOpen(false)} />
+      <NovoInvestidorModal open={novoOpen} onClose={() => setNovoOpen(false)} />
       <InvestidorDetalheModal
         investidor={detalhe}
         open={!!detalhe}
         onClose={() => setDetalhe(null)}
+      />
+      <EnviarCredenciaisModal
+        open={enviarOpen}
+        onClose={() => setEnviarOpen(false)}
+        selecionados={state.investidores.filter((i) => selecionados.has(i.id))}
+        todosFiltrados={filtrados}
       />
     </>
   );

@@ -29,6 +29,7 @@ import {
   type Investidor,
   type StatusInvestidor,
 } from "@/store/investors";
+import { gerarCredenciaisEmLote } from "@/lib/api/usuarios";
 import { cn } from "@/lib/utils";
 
 type Step = "upload" | "mapping" | "validacao" | "sucesso";
@@ -58,6 +59,7 @@ interface ResumoImport {
   novos: number;
   duplicados: number;
   invalidos: number;
+  credenciaisCriadas?: number;
 }
 
 const CAMPOS: { key: CampoInvestidor; label: string; obrigatorio: boolean }[] = [
@@ -94,17 +96,23 @@ export function ImportCsvModal({
   const [statusPadrao, setStatusPadrao] = useState<StatusInvestidor>(
     "pendente_confirmacao"
   );
+  const [gerarCredenciais, setGerarCredenciais] = useState(false);
+  const [importando, setImportando] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [resumo, setResumo] = useState<ResumoImport | null>(null);
 
-  // Reset ao fechar/abrir
+  // Reset ao fechar/abrir — sincroniza estado interno com a prop `open`.
   useEffect(() => {
     if (!open) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setStep("upload");
       setParsed(null);
       setMapping({});
       setParseError(null);
       setResumo(null);
+      setGerarCredenciais(false);
+      setImportando(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [open]);
 
@@ -220,7 +228,7 @@ export function ImportCsvModal({
   }, [linhasValidadas]);
 
   // ===== Confirmar import =====
-  const confirmarImport = () => {
+  const confirmarImport = async () => {
     const cpfsExistentes = new Map(
       invState.investidores.map((i) => [cleanCpf(i.cpf), i.id])
     );
@@ -280,11 +288,31 @@ export function ImportCsvModal({
       dispatch({ type: "bulkImport", payload: { novos } });
     }
 
+    // Geração de credenciais de acesso (papel investidor) — opcional
+    let credenciaisCriadas: number | undefined;
+    if (gerarCredenciais && novos.length > 0) {
+      setImportando(true);
+      try {
+        const r = await gerarCredenciaisEmLote(
+          novos.map((n) => ({ nome: n.nome, email: n.email, cpf: n.cpf }))
+        );
+        credenciaisCriadas = r.criados;
+      } catch (e) {
+        console.error("[import] falha ao gerar credenciais:", e);
+        alert(
+          "Investidores importados, mas houve erro ao gerar as credenciais. Verifique o console."
+        );
+      } finally {
+        setImportando(false);
+      }
+    }
+
     setResumo({
       totalLido: linhasValidadas.length,
       novos: novos.length,
       duplicados: duplicadosTratados,
       invalidos: stats.invalidas,
+      credenciaisCriadas,
     });
     setStep("sucesso");
   };
@@ -348,6 +376,8 @@ export function ImportCsvModal({
               setDuplicadosAction={setDuplicadosAction}
               statusPadrao={statusPadrao}
               setStatusPadrao={setStatusPadrao}
+              gerarCredenciais={gerarCredenciais}
+              setGerarCredenciais={setGerarCredenciais}
             />
           )}
           {step === "sucesso" && resumo && <SucessoStep resumo={resumo} />}
@@ -392,11 +422,11 @@ export function ImportCsvModal({
             {step === "validacao" && (
               <button
                 onClick={confirmarImport}
-                disabled={!podeAvancarValidacao}
+                disabled={!podeAvancarValidacao || importando}
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check className="h-3.5 w-3.5" />
-                Confirmar importação
+                {importando ? "Importando..." : "Confirmar importação"}
               </button>
             )}
 
@@ -658,6 +688,8 @@ function ValidacaoStep({
   setDuplicadosAction,
   statusPadrao,
   setStatusPadrao,
+  gerarCredenciais,
+  setGerarCredenciais,
 }: {
   linhas: LinhaValidacao[];
   stats: {
@@ -670,6 +702,8 @@ function ValidacaoStep({
   setDuplicadosAction: (s: "ignorar" | "atualizar") => void;
   statusPadrao: StatusInvestidor;
   setStatusPadrao: (s: StatusInvestidor) => void;
+  gerarCredenciais: boolean;
+  setGerarCredenciais: (b: boolean) => void;
 }) {
   const [filtro, setFiltro] = useState<"todos" | "validas" | "dup" | "erros">(
     "todos"
@@ -747,6 +781,27 @@ function ValidacaoStep({
             <option value="ativo">Ativo (já confirmado)</option>
             <option value="inativo">Inativo</option>
           </select>
+        </div>
+
+        <div className="pt-2 border-t border-border">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={gerarCredenciais}
+              onChange={(e) => setGerarCredenciais(e.target.checked)}
+              className="mt-0.5 rounded border-input text-primary focus:ring-primary/30"
+            />
+            <span>
+              <span className="text-[13px] font-semibold text-foreground">
+                Gerar credenciais de acesso?
+              </span>
+              <span className="block text-[12px] text-muted-foreground mt-0.5">
+                Cria um usuário (papel investidor) com senha provisória para cada
+                novo investidor importado. O envio das credenciais por e-mail é
+                feito depois, na lista de investidores.
+              </span>
+            </span>
+          </label>
         </div>
       </div>
 
@@ -904,6 +959,17 @@ function SucessoStep({ resumo }: { resumo: ResumoImport }) {
           tone="destructive"
         />
       </div>
+
+      {resumo.credenciaisCriadas !== undefined && (
+        <div className="mt-6 max-w-md mx-auto rounded-lg border border-primary/20 bg-primary/5 p-4 text-left flex items-start gap-3">
+          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <div className="text-[13px] text-foreground">
+            <strong>{resumo.credenciaisCriadas}</strong> credenciais de acesso
+            geradas (papel investidor). Envie por e-mail na{" "}
+            <strong>lista de investidores</strong> → "Enviar credenciais".
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,11 @@
+// Arquivo de contexto: co-loca provider e hook do conteúdo (CMS).
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useReducer,
+  useState,
   type ReactNode,
 } from "react";
 import type {
@@ -12,30 +15,38 @@ import type {
   Evento,
   KitTrimestre,
   TextosInstitucionais,
+  NavItem,
+  QuickAction,
+  FooterColuna,
+  RedeSocial,
+  SiteConfig,
+  Faq,
 } from "./types";
-import { SEED, CONTENT_VERSION } from "./seed";
+import { SEED } from "./seed";
+import * as contentApi from "@/lib/api/content";
+import { useAuth } from "./auth";
 
-const STORAGE_KEY = "ica-content-store@v1";
-
-// ===== Actions =====
+// ===== Actions (assinatura preservada p/ compatibilidade dos consumidores) =====
 type Action =
-  // Comunicados
   | { type: "comunicado/create"; payload: Omit<Comunicado, "id"> }
   | { type: "comunicado/update"; payload: Comunicado }
   | { type: "comunicado/delete"; payload: { id: string } }
-  // Eventos
   | { type: "evento/create"; payload: Omit<Evento, "id"> }
   | { type: "evento/update"; payload: Evento }
   | { type: "evento/delete"; payload: { id: string } }
-  // Documentos
   | { type: "documento/create"; payload: Omit<Documento, "id"> }
   | { type: "documento/update"; payload: Documento }
   | { type: "documento/delete"; payload: { id: string } }
-  // Kit
   | { type: "kit/update"; payload: KitTrimestre }
-  // Textos
   | { type: "textos/update"; payload: Partial<TextosInstitucionais> }
-  // Misc
+  | { type: "nav/save"; payload: NavItem[] }
+  | { type: "quickActions/save"; payload: QuickAction[] }
+  | { type: "footer/save"; payload: FooterColuna[] }
+  | { type: "redes/save"; payload: RedeSocial[] }
+  | { type: "config/update"; payload: SiteConfig }
+  | { type: "faq/create"; payload: Omit<Faq, "id"> }
+  | { type: "faq/update"; payload: Faq }
+  | { type: "faq/delete"; payload: { id: string } }
   | { type: "reset" };
 
 function genId(prefix: string) {
@@ -44,6 +55,8 @@ function genId(prefix: string) {
     .slice(2, 6)}`;
 }
 
+// Reducer puro — usado para atualização OTIMISTA local enquanto o backend
+// confirma. Após a persistência, refetch() reconcilia com os ids reais do DB.
 function reducer(state: ContentState, action: Action): ContentState {
   switch (action.type) {
     case "comunicado/create":
@@ -64,9 +77,7 @@ function reducer(state: ContentState, action: Action): ContentState {
     case "comunicado/delete":
       return {
         ...state,
-        comunicados: state.comunicados.filter(
-          (c) => c.id !== action.payload.id
-        ),
+        comunicados: state.comunicados.filter((c) => c.id !== action.payload.id),
       };
 
     case "evento/create":
@@ -107,11 +118,9 @@ function reducer(state: ContentState, action: Action): ContentState {
       return {
         ...state,
         documentos: state.documentos.filter((d) => d.id !== removedId),
-        // Cascade: limpar referência do documento em comunicados vinculados
         comunicados: state.comunicados.map((c) =>
           c.documentoId === removedId ? { ...c, documentoId: undefined } : c
         ),
-        // Cascade: remover do Kit do Investidor se estava em destaque
         kitAtual: {
           ...state.kitAtual,
           documentosDestaqueIds: state.kitAtual.documentosDestaqueIds.filter(
@@ -125,67 +134,136 @@ function reducer(state: ContentState, action: Action): ContentState {
       return { ...state, kitAtual: action.payload };
 
     case "textos/update":
+      return { ...state, textos: { ...state.textos, ...action.payload } };
+
+    case "nav/save":
+      return { ...state, navItems: action.payload };
+    case "quickActions/save":
+      return { ...state, quickActions: action.payload };
+    case "footer/save":
+      return { ...state, footerColunas: action.payload };
+    case "redes/save":
+      return { ...state, redesSociais: action.payload };
+    case "config/update":
+      return { ...state, config: action.payload };
+
+    case "faq/create":
       return {
         ...state,
-        textos: { ...state.textos, ...action.payload },
+        faqs: [...state.faqs, { ...action.payload, id: genId("faq") }],
+      };
+    case "faq/update":
+      return {
+        ...state,
+        faqs: state.faqs.map((f) =>
+          f.id === action.payload.id ? action.payload : f
+        ),
+      };
+    case "faq/delete":
+      return {
+        ...state,
+        faqs: state.faqs.filter((f) => f.id !== action.payload.id),
       };
 
     case "reset":
-      return { ...SEED };
+      return state; // re-seed do DB não é feito pelo cliente; refetch recarrega
 
     default:
       return state;
   }
 }
 
-// ===== Persistence =====
-function loadInitial(): ContentState {
-  if (typeof window === "undefined") return SEED;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return SEED;
-    const parsed = JSON.parse(raw) as ContentState;
-    if (!parsed.version || parsed.version !== CONTENT_VERSION) return SEED;
-    return parsed;
-  } catch {
-    return SEED;
+// Persiste a ação no backend (Supabase) via camada de API.
+async function persist(action: Action): Promise<void> {
+  switch (action.type) {
+    case "comunicado/create":
+      return contentApi.createComunicado(action.payload);
+    case "comunicado/update":
+      return contentApi.updateComunicado(action.payload);
+    case "comunicado/delete":
+      return contentApi.deleteComunicado(action.payload.id);
+    case "evento/create":
+      return contentApi.createEvento(action.payload);
+    case "evento/update":
+      return contentApi.updateEvento(action.payload);
+    case "evento/delete":
+      return contentApi.deleteEvento(action.payload.id);
+    case "documento/create":
+      return contentApi.createDocumento(action.payload);
+    case "documento/update":
+      return contentApi.updateDocumento(action.payload);
+    case "documento/delete":
+      return contentApi.deleteDocumento(action.payload.id);
+    case "kit/update":
+      return contentApi.updateKit(action.payload);
+    case "textos/update":
+      return contentApi.updateTextos(action.payload);
+    case "nav/save":
+      return contentApi.saveNavItems(action.payload);
+    case "quickActions/save":
+      return contentApi.saveQuickActions(action.payload);
+    case "footer/save":
+      return contentApi.saveFooter(action.payload);
+    case "redes/save":
+      return contentApi.saveRedesSociais(action.payload);
+    case "config/update":
+      return contentApi.updateConfig(action.payload);
+    case "faq/create":
+      return contentApi.createFaq(action.payload);
+    case "faq/update":
+      return contentApi.updateFaq(action.payload);
+    case "faq/delete":
+      return contentApi.deleteFaq(action.payload.id);
+    case "reset":
+      return Promise.resolve();
   }
 }
 
 // ===== Context =====
 interface ContentContextValue {
   state: ContentState;
-  dispatch: React.Dispatch<Action>;
+  dispatch: (action: Action) => void;
+  loading: boolean;
+  refetch: () => Promise<void>;
 }
 
 const ContentContext = createContext<ContentContextValue | null>(null);
 
 export function ContentProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, loadInitial);
+  // SEED como placeholder imediato (mesma forma) até o refetch do DB chegar.
+  const [state, setState] = useState<ContentState>(SEED);
+  const [loading, setLoading] = useState(true);
+  const { session } = useAuth();
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // localStorage cheio ou indisponível — silenciar
-    }
-  }, [state]);
-
-  // Sync entre abas: admin em uma aba edita → outra aba (ex: portal) recarrega
-  // com o novo estado. Reload é o caminho mais simples e correto para garantir
-  // que todos os hooks que dependem do store reflitam a mudança.
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        window.location.reload();
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+  const refetch = useCallback(async () => {
+    const data = await contentApi.getContent();
+    setState(data);
   }, []);
 
+  useEffect(() => {
+    // Carrega no mount e recarrega quando a sessão muda (login/logout) —
+    // necessário com RLS para o admin ver conteúdo não publicado.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refetch()
+      .catch((err) => console.error("[content] falha ao carregar do Supabase:", err))
+      .finally(() => setLoading(false));
+  }, [refetch, session?.user?.id]);
+
+  const dispatch = useCallback(
+    (action: Action) => {
+      setState((prev) => reducer(prev, action)); // otimista
+      void persist(action)
+        .then(() => refetch()) // reconcilia com ids reais do DB
+        .catch((err) => {
+          console.error("[content] falha ao persistir:", err);
+          void refetch(); // rollback para o estado autoritativo
+        });
+    },
+    [refetch]
+  );
+
   return (
-    <ContentContext.Provider value={{ state, dispatch }}>
+    <ContentContext.Provider value={{ state, dispatch, loading, refetch }}>
       {children}
     </ContentContext.Provider>
   );

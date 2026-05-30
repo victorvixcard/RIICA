@@ -5,18 +5,12 @@ import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import { useContent } from "@/store/content";
 
-const NAV = [
-  { label: "Governança Corporativa", to: "#governanca" },
-  { label: "Informações Financeiras", to: "/demonstracoes" },
-  { label: "Comunicados, Eventos e Replays", to: "#comunicados" },
-  { label: "Ação", to: "#acao" },
-  { label: "Serviços aos Investidores", to: "#servicos" },
-];
-
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const { state } = useContent();
-  const ticker = state.textos.ticker;
+  const nav = [...state.navItems]
+    .filter((i) => i.visivel)
+    .sort((a, b) => a.ordem - b.ordem);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -40,31 +34,9 @@ export function Header() {
             <Logo />
           </Link>
 
-          <div className="hidden lg:flex items-center gap-7 text-[13px]">
-            {ticker.map((tk, i) => (
-              <div key={tk.id} className="flex items-center gap-2">
-                <span className="font-semibold tracking-wide text-foreground">
-                  {tk.simbolo}
-                </span>
-                <span className="text-muted-foreground">{tk.preco}</span>
-                <span
-                  className={cn(
-                    "font-semibold",
-                    tk.positivo ? "text-primary" : "text-destructive"
-                  )}
-                >
-                  {tk.variacao}
-                </span>
-                {i < ticker.length - 1 && (
-                  <span className="ml-5 h-4 w-px bg-border" />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <a
-              href="https://seugrupoica.com.br"
+              href={state.config.institucionalUrl}
               target="_blank"
               rel="noreferrer"
               className="hidden md:inline-flex rounded-full border border-border px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground hover:border-primary hover:text-primary transition-colors"
@@ -91,8 +63,8 @@ export function Header() {
 
         <nav className="mt-4 flex items-center justify-between border-t border-border/60 pt-4">
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {NAV.map((item) => {
-              const isInternal = item.to.startsWith("/");
+            {nav.map((item) => {
+              const isInternal = item.url.startsWith("/");
               const inner = (
                 <span className="group inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-foreground/75 hover:text-primary transition-colors">
                   {item.label}
@@ -102,11 +74,11 @@ export function Header() {
                 </span>
               );
               return (
-                <li key={item.label}>
+                <li key={item.id}>
                   {isInternal ? (
-                    <Link to={item.to}>{inner}</Link>
+                    <Link to={item.url}>{inner}</Link>
                   ) : (
-                    <button>{inner}</button>
+                    <a href={item.url}>{inner}</a>
                   )}
                 </li>
               );

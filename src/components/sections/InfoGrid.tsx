@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, FileText, Download } from "lucide-react";
 import { useContent } from "@/store/content";
+import { PlaceholderEmBreve } from "@/components/PlaceholderEmBreve";
 
 function Column({
   eyebrow,
@@ -71,11 +72,13 @@ export function InfoGrid() {
       <div className="mx-auto max-w-[1500px] px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
           {/* Últimas Atualizações */}
-          <Column eyebrow="Últimas Atualizações" cta="Ver mais" delay={0}>
+          <Column
+            eyebrow="Últimas Atualizações"
+            cta={updates.length > 0 ? "Ver mais" : undefined}
+            delay={0}
+          >
             {updates.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground italic">
-                Nenhum comunicado publicado no momento.
-              </p>
+              <PlaceholderEmBreve tipo="Os comunicados ao mercado" />
             ) : (
               <ul className="space-y-5">
                 {updates.map((u) => (
@@ -102,6 +105,9 @@ export function InfoGrid() {
 
           {/* Kit do Investidor */}
           <Column eyebrow="Kit do Investidor" delay={0.1}>
+            {docsDestaque.length === 0 ? (
+              <PlaceholderEmBreve tipo="Os documentos do Kit do Investidor" />
+            ) : (
             <div className="rounded-xl border border-border bg-card shadow-soft p-6">
               <div className="flex items-start gap-6">
                 <div className="flex flex-col items-center justify-center">
@@ -148,14 +154,17 @@ export function InfoGrid() {
                 </div>
               )}
             </div>
+            )}
           </Column>
 
           {/* Próximos Eventos */}
-          <Column eyebrow="Próximos Eventos" cta="Ver agenda completa" delay={0.2}>
+          <Column
+            eyebrow="Próximos Eventos"
+            cta={eventosFuturos.length > 0 ? "Ver agenda completa" : undefined}
+            delay={0.2}
+          >
             {eventosFuturos.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground italic">
-                Nenhum evento agendado.
-              </p>
+              <PlaceholderEmBreve tipo="Os próximos eventos do investidor" />
             ) : (
               <ul className="space-y-3">
                 {eventosFuturos.map((ev) => (

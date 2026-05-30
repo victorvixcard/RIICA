@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Filter,
@@ -11,12 +11,13 @@ import {
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import {
-  HISTORICO,
   STATUS_ENVIO_LABEL,
   STATUS_ENVIO_TINT,
+  type EnvioLog,
   type CanalEnvio,
   type StatusEnvio,
 } from "@/mock/historico";
+import { getHistorico } from "@/lib/api/historico";
 import { cn } from "@/lib/utils";
 
 const CANAL_ICON: Record<CanalEnvio, typeof Mail> = {
@@ -57,9 +58,16 @@ export function Historico() {
     "todos"
   );
   const [filtroCanal, setFiltroCanal] = useState<CanalEnvio | "todos">("todos");
+  const [historico, setHistorico] = useState<EnvioLog[]>([]);
+
+  useEffect(() => {
+    getHistorico()
+      .then(setHistorico)
+      .catch((e) => console.error("[historico] erro ao carregar:", e));
+  }, []);
 
   const filtrados = useMemo(() => {
-    let arr = HISTORICO;
+    let arr = historico;
     if (filtroStatus !== "todos") arr = arr.filter((e) => e.status === filtroStatus);
     if (filtroCanal !== "todos") arr = arr.filter((e) => e.canal === filtroCanal);
     if (busca.trim()) {
@@ -73,19 +81,19 @@ export function Historico() {
       );
     }
     return [...arr].sort((a, b) => b.enviadoEm.localeCompare(a.enviadoEm));
-  }, [busca, filtroStatus, filtroCanal]);
+  }, [busca, filtroStatus, filtroCanal, historico]);
 
   const stats = useMemo(() => {
-    const total = HISTORICO.length;
-    const sucesso = HISTORICO.filter(
+    const total = historico.length;
+    const sucesso = historico.filter(
       (e) => e.status === "entregue" || e.status === "aberto" || e.status === "clicado"
     ).length;
-    const cliques = HISTORICO.filter((e) => e.status === "clicado").length;
-    const falhas = HISTORICO.filter(
+    const cliques = historico.filter((e) => e.status === "clicado").length;
+    const falhas = historico.filter(
       (e) => e.status === "falhou" || e.status === "bouncing"
     ).length;
     return { total, sucesso, cliques, falhas };
-  }, []);
+  }, [historico]);
 
   return (
     <>
@@ -277,7 +285,7 @@ export function Historico() {
 
           <p className="text-[12px] text-muted-foreground">
             Mostrando <strong className="text-foreground">{filtrados.length}</strong>{" "}
-            de <strong className="text-foreground">{HISTORICO.length}</strong>{" "}
+            de <strong className="text-foreground">{historico.length}</strong>{" "}
             registros. Auditoria completa com retenção mínima de 5 anos.
           </p>
         </div>

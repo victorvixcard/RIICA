@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { useInvestors, type StatusInvestidor } from "@/store/investors";
-import { TEMPLATES, type CanalTemplate } from "@/mock/templates";
+import { type CanalTemplate, type Template } from "@/mock/templates";
+import { getTemplates } from "@/lib/api/templates";
+import { createCampanha } from "@/lib/api/campanhas";
 import { cn } from "@/lib/utils";
 
 type Step = 1 | 2 | 3 | 4;
@@ -70,6 +72,14 @@ export function CampanhaNova() {
   const { state: invState } = useInvestors();
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormCampanha>(EMPTY);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    getTemplates()
+      .then(setTemplates)
+      .catch((e) => console.error("[campanha-nova] erro ao carregar templates:", e));
+  }, []);
 
   const audienciaCount = (() => {
     if (form.audienciaTipo === "todos") return invState.investidores.length;
@@ -103,11 +113,34 @@ export function CampanhaNova() {
     }));
   };
 
-  const confirmar = () => {
-    alert(
-      `Campanha "${form.titulo}" criada em modo rascunho.\n\nQuando integrarmos com provedores reais (Resend, Meta API, FCM), o envio será disparado automaticamente.`
-    );
-    navigate("/admin/campanhas");
+  const confirmar = async () => {
+    setSalvando(true);
+    try {
+      const templateRef = Object.values(form.templates).find(Boolean) ?? "";
+      await createCampanha({
+        titulo: form.titulo.trim(),
+        canais: form.canais,
+        status: form.agendamento === "agendada" ? "agendada" : "rascunho",
+        audienciaTotal: audienciaCount,
+        entregues: 0,
+        abertura: 0,
+        agendadaPara:
+          form.agendamento === "agendada"
+            ? new Date(form.agendadaPara).toISOString()
+            : undefined,
+        criadaEm: new Date().toISOString(),
+        template: templateRef,
+      });
+      alert(
+        `Campanha "${form.titulo}" criada como ${form.agendamento === "agendada" ? "agendada" : "rascunho"}.\n\nO disparo real (Resend, Meta API, FCM) entra na Fase 2.`
+      );
+      navigate("/admin/campanhas");
+    } catch (e) {
+      console.error("[campanha-nova] erro ao criar:", e);
+      alert("Erro ao criar a campanha. Veja o console.");
+    } finally {
+      setSalvando(false);
+    }
   };
 
   return (
@@ -186,10 +219,15 @@ export function CampanhaNova() {
               />
             )}
             {step === 3 && (
-              <Step3 form={form} setForm={setForm} toggleCanal={toggleCanal} />
+              <Step3
+                form={form}
+                setForm={setForm}
+                toggleCanal={toggleCanal}
+                templates={templates}
+              />
             )}
             {step === 4 && (
-              <Step4 form={form} audienciaCount={audienciaCount} />
+              <Step4 form={form} setForm={setForm} audienciaCount={audienciaCount} />
             )}
           </div>
 
@@ -221,10 +259,15 @@ export function CampanhaNova() {
               {step === 4 && (
                 <button
                   onClick={confirmar}
-                  className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors"
+                  disabled={salvando}
+                  className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="h-3.5 w-3.5" />
-                  {form.agendamento === "agora" ? "Enviar agora" : "Agendar"}
+                  {salvando
+                    ? "Salvando..."
+                    : form.agendamento === "agora"
+                      ? "Criar campanha"
+                      : "Agendar"}
                 </button>
               )}
             </div>
@@ -436,10 +479,12 @@ function Step3({
   form,
   setForm,
   toggleCanal,
+  templates,
 }: {
   form: FormCampanha;
   setForm: React.Dispatch<React.SetStateAction<FormCampanha>>;
   toggleCanal: (c: CanalTemplate) => void;
+  templates: Template[];
 }) {
   return (
     <div className="space-y-5">
@@ -499,7 +544,7 @@ function Step3({
           </div>
           {form.canais.map((canal) => {
             const Icon = CANAL_ICON[canal];
-            const tplDoCanal = TEMPLATES.filter((t) => t.canal === canal && t.ativo);
+            const tplDoCanal = templates.filter((t) => t.canal === canal && t.ativo);
             return (
               <div
                 key={canal}
@@ -542,9 +587,11 @@ function Step3({
 
 function Step4({
   form,
+  setForm,
   audienciaCount,
 }: {
   form: FormCampanha;
+  setForm: React.Dispatch<React.SetStateAction<FormCampanha>>;
   audienciaCount: number;
 }) {
   return (
@@ -578,10 +625,7 @@ function Step4({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
-            onClick={() =>
-              (window as any).__setAgendamento?.("agora") ||
-              undefined /* fallback */
-            }
+            onClick={() => setForm((f) => ({ ...f, agendamento: "agora" }))}
             className={cn(
               "rounded-lg border-2 p-4 text-left transition-all",
               form.agendamento === "agora"
@@ -602,12 +646,13 @@ function Step4({
               Disparo imediato após confirmação
             </p>
           </button>
-          <div
+          <button
+            onClick={() => setForm((f) => ({ ...f, agendamento: "agendada" }))}
             className={cn(
-              "rounded-lg border-2 p-4 transition-all",
+              "rounded-lg border-2 p-4 text-left transition-all",
               form.agendamento === "agendada"
                 ? "border-primary bg-primary/5"
-                : "border-border bg-card"
+                : "border-border bg-card hover:border-primary/40"
             )}
           >
             <div className="flex items-center justify-between">
@@ -622,7 +667,7 @@ function Step4({
             <p className="mt-1 text-[11px] text-muted-foreground">
               Disparo automático em data/hora futura
             </p>
-          </div>
+          </button>
         </div>
       </div>
 

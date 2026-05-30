@@ -8,6 +8,10 @@ import {
   ArrowRight,
   ExternalLink,
   RotateCcw,
+  Menu,
+  MousePointerClick,
+  PanelBottom,
+  HelpCircle,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { useContent } from "@/store/content";
@@ -70,19 +74,13 @@ function SectionCard({
 }
 
 export function ConteudoOverview() {
-  const { state, dispatch } = useContent();
+  const { state, refetch } = useContent();
   const comunicadosPub = state.comunicados.filter((c) => c.publicado).length;
   const eventosPub = state.eventos.filter((e) => e.publicado).length;
   const docsPub = state.documentos.filter((d) => d.publico).length;
 
-  const onReset = () => {
-    if (
-      confirm(
-        "Resetar todo o conteúdo para o padrão inicial?\n\nTodos os comunicados, eventos, documentos, configurações do Kit e textos editados serão perdidos."
-      )
-    ) {
-      dispatch({ type: "reset" });
-    }
+  const onRecarregar = () => {
+    void refetch();
   };
 
   return (
@@ -93,11 +91,12 @@ export function ConteudoOverview() {
         actions={
           <div className="flex items-center gap-2">
             <button
-              onClick={onReset}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[12px] font-bold uppercase tracking-wider text-muted-foreground hover:border-destructive/40 hover:text-destructive transition-colors"
+              onClick={onRecarregar}
+              title="Recarregar o conteúdo a partir do banco"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[12px] font-bold uppercase tracking-wider text-muted-foreground hover:border-primary hover:text-primary transition-colors"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Resetar
+              Recarregar
             </button>
             <a
               href="/"
@@ -184,6 +183,42 @@ export function ConteudoOverview() {
                 description="Hero, propósito, KPIs do 'Grupo ICA em números' e ticker de cotações."
                 count={state.textos.kpis.length}
                 countLabel="KPIs cadastrados"
+              />
+              <SectionCard
+                to="/admin/conteudo/navegacao"
+                icon={Menu}
+                title="Navegação"
+                description="Itens do menu principal do header — rótulos, ordem, links e visibilidade."
+                count={state.navItems.length}
+                countLabel="itens de menu"
+                status={`${state.navItems.filter((n) => n.visivel).length} visíveis`}
+              />
+              <SectionCard
+                to="/admin/conteudo/acoes"
+                icon={MousePointerClick}
+                title="Ações rápidas"
+                description="Botões em destaque logo abaixo do hero (FAQs, Resultados, Mailing, Contato)."
+                count={state.quickActions.length}
+                countLabel="botões"
+                status={`${state.quickActions.filter((a) => a.visivel).length} visíveis`}
+              />
+              <SectionCard
+                to="/admin/conteudo/rodape"
+                icon={PanelBottom}
+                title="Rodapé"
+                description="Textos institucionais, colunas de links, redes sociais, CNPJ e endereço."
+                count={state.footerColunas.length}
+                countLabel="colunas"
+                status={`${state.redesSociais.length} redes`}
+              />
+              <SectionCard
+                to="/admin/conteudo/faq"
+                icon={HelpCircle}
+                title="FAQ"
+                description="Perguntas frequentes exibidas no portal — pergunta, resposta e categoria."
+                count={state.faqs.length}
+                countLabel="perguntas"
+                status={`${state.faqs.filter((f) => f.publicado).length} publicadas`}
               />
             </div>
           </div>

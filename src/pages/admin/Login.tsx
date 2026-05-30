@@ -1,18 +1,29 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight, Lock, Mail, ArrowLeft } from "lucide-react";
+import { ArrowRight, Lock, Mail, ArrowLeft, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { useAuth } from "@/store/auth";
 
 export function LoginAdmin() {
   const navigate = useNavigate();
+  const { loginAdmin } = useAuth();
   const [email, setEmail] = useState("vitao@grupoica.com.br");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErro("");
     setLoading(true);
-    setTimeout(() => navigate("/admin/dashboard"), 600);
+    try {
+      await loginAdmin(email, senha);
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Falha ao entrar.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -113,6 +124,13 @@ export function LoginAdmin() {
                 Esqueci a senha
               </a>
             </div>
+
+            {erro && (
+              <div className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2.5 text-[13px] text-destructive">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                {erro}
+              </div>
+            )}
 
             <button
               type="submit"

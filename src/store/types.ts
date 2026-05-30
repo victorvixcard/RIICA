@@ -116,6 +116,67 @@ export interface TextosInstitucionais {
   ticker: TickerSimbolo[];
 }
 
+// ===== CMS estendido — blocos antes hardcoded =====
+export interface NavItem {
+  id: string;
+  label: string;
+  url: string;
+  ordem: number;
+  visivel: boolean;
+}
+
+export interface QuickAction {
+  id: string;
+  label: string;
+  href: string;
+  ordem: number;
+  visivel: boolean;
+}
+
+export interface FooterLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface FooterColuna {
+  id: string;
+  titulo: string;
+  links: FooterLink[];
+}
+
+export type TipoRedeSocial =
+  | "linkedin"
+  | "instagram"
+  | "facebook"
+  | "youtube"
+  | "x"
+  | "email"
+  | "telefone";
+
+export interface RedeSocial {
+  id: string;
+  tipo: TipoRedeSocial;
+  url: string;
+}
+
+export interface SiteConfig {
+  institucionalUrl: string;
+  footerDescricao: string;
+  footerCnpj: string;
+  footerEndereco: string;
+  footerCopyright: string;
+}
+
+export interface Faq {
+  id: string;
+  pergunta: string;
+  resposta: string;
+  categoria?: string;
+  ordem: number;
+  publicado: boolean;
+}
+
 export interface ContentState {
   version: number;
   comunicados: Comunicado[];
@@ -123,4 +184,11 @@ export interface ContentState {
   documentos: Documento[];
   kitAtual: KitTrimestre;
   textos: TextosInstitucionais;
+  // CMS estendido
+  navItems: NavItem[];
+  quickActions: QuickAction[];
+  footerColunas: FooterColuna[];
+  redesSociais: RedeSocial[];
+  config: SiteConfig;
+  faqs: Faq[];
 }

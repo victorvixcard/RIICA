@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
@@ -12,11 +12,11 @@ import {
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import {
-  TEMPLATES,
   CANAL_TEMPLATE_LABEL,
   type CanalTemplate,
   type Template,
 } from "@/mock/templates";
+import { getTemplates } from "@/lib/api/templates";
 import { cn } from "@/lib/utils";
 
 const CANAL_ICON: Record<CanalTemplate, typeof Mail> = {
@@ -37,9 +37,16 @@ export function Templates() {
     "todos"
   );
   const [aberto, setAberto] = useState<Template | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  useEffect(() => {
+    getTemplates()
+      .then(setTemplates)
+      .catch((e) => console.error("[templates] erro ao carregar:", e));
+  }, []);
 
   const filtrados = useMemo(() => {
-    let arr = TEMPLATES;
+    let arr = templates;
     if (filtroCanal !== "todos")
       arr = arr.filter((t) => t.canal === filtroCanal);
     if (busca.trim()) {
@@ -51,7 +58,7 @@ export function Templates() {
       );
     }
     return arr;
-  }, [busca, filtroCanal]);
+  }, [busca, filtroCanal, templates]);
 
   return (
     <>
@@ -93,10 +100,10 @@ export function Templates() {
               <Chip
                 active={filtroCanal === "todos"}
                 onClick={() => setFiltroCanal("todos")}
-                label={`Todos (${TEMPLATES.length})`}
+                label={`Todos (${templates.length})`}
               />
               {(["email", "whatsapp", "push"] as CanalTemplate[]).map((c) => {
-                const count = TEMPLATES.filter((t) => t.canal === c).length;
+                const count = templates.filter((t) => t.canal === c).length;
                 return (
                   <Chip
                     key={c}

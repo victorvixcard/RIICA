@@ -187,4 +187,70 @@ export const SEED: ContentState = {
       },
     ],
   },
+  navItems: [
+    { id: "nav-1", label: "Governança Corporativa", url: "#governanca", ordem: 0, visivel: true },
+    { id: "nav-2", label: "Informações Financeiras", url: "/demonstracoes", ordem: 1, visivel: true },
+    { id: "nav-3", label: "Comunicados, Eventos e Replays", url: "#comunicados", ordem: 2, visivel: true },
+    { id: "nav-4", label: "Ação", url: "#acao", ordem: 3, visivel: true },
+    { id: "nav-5", label: "Serviços aos Investidores", url: "#servicos", ordem: 4, visivel: true },
+  ],
+  quickActions: [
+    { id: "qa-1", label: "FAQs", href: "#faqs", ordem: 0, visivel: true },
+    { id: "qa-2", label: "Resultados Trimestrais", href: "#resultados", ordem: 1, visivel: true },
+    { id: "qa-3", label: "Apresentação Institucional", href: "#apresentacao", ordem: 2, visivel: true },
+    { id: "qa-4", label: "Mailing", href: "#mailing", ordem: 3, visivel: true },
+    { id: "qa-5", label: "Contato com RI", href: "#contato", ordem: 4, visivel: true },
+  ],
+  footerColunas: [
+    {
+      id: "fc-1",
+      titulo: "Sobre a ICA",
+      links: [
+        { id: "fl-1", label: "Quem somos", url: "#" },
+        { id: "fl-2", label: "Nossas soluções", url: "#" },
+        { id: "fl-3", label: "Governança", url: "#" },
+        { id: "fl-4", label: "Carreiras", url: "#" },
+      ],
+    },
+    {
+      id: "fc-2",
+      titulo: "Investidores",
+      links: [
+        { id: "fl-5", label: "Informações financeiras", url: "/demonstracoes" },
+        { id: "fl-6", label: "Comunicados ao mercado", url: "#comunicados" },
+        { id: "fl-7", label: "Agenda do investidor", url: "#eventos" },
+        { id: "fl-8", label: "FAQ", url: "#faqs" },
+      ],
+    },
+    {
+      id: "fc-3",
+      titulo: "Atendimento",
+      links: [
+        { id: "fl-9", label: "Fale com RI", url: "#contato" },
+        { id: "fl-10", label: "Imprensa", url: "#" },
+        { id: "fl-11", label: "Ouvidoria", url: "#" },
+        { id: "fl-12", label: "Política de privacidade", url: "#" },
+      ],
+    },
+  ],
+  redesSociais: [
+    { id: "rs-1", tipo: "linkedin", url: "#" },
+    { id: "rs-2", tipo: "instagram", url: "#" },
+    { id: "rs-3", tipo: "email", url: "mailto:ri@grupoica.com.br" },
+    { id: "rs-4", tipo: "telefone", url: "tel:+5527000000000" },
+  ],
+  config: {
+    institucionalUrl: "https://seugrupoica.com.br",
+    footerDescricao:
+      "Relações com Investidores do Grupo ICA — transparência, governança e comunicação direta com nossos acionistas.",
+    footerCnpj: "CNPJ 00.000.000/0001-00",
+    footerEndereco: "Rua Exemplo, 1000 — Vitória/ES — Brasil",
+    footerCopyright: "© 2026 Grupo ICA. Todos os direitos reservados.",
+  },
+  faqs: [
+    { id: "faq-1", pergunta: "Como acesso a área do investidor?", resposta: "Clique em \"Área do Investidor\" no topo do portal e entre com seu CPF e a senha cadastrada no primeiro acesso.", categoria: "Acesso", ordem: 0, publicado: true },
+    { id: "faq-2", pergunta: "Onde encontro os resultados trimestrais?", resposta: "Os releases, apresentações e demonstrações financeiras de cada trimestre ficam no Kit do Investidor e na seção de Documentos.", categoria: "Resultados", ordem: 1, publicado: true },
+    { id: "faq-3", pergunta: "Como entro em contato com o time de RI?", resposta: "Use o botão \"Contato com RI\" no portal ou escreva para ri@grupoica.com.br.", categoria: "Contato", ordem: 2, publicado: true },
+    { id: "faq-4", pergunta: "Quando ocorre a próxima teleconferência?", resposta: "As datas das teleconferências e demais eventos ficam na agenda \"Próximos Eventos\" da home.", categoria: "Eventos", ordem: 3, publicado: true },
+  ],
 };

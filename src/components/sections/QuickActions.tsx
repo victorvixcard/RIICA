@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { useContent } from "@/store/content";
 
-const ACTIONS = [
-  { label: "FAQs", href: "#faqs" },
-  { label: "Resultados Trimestrais", href: "#resultados" },
-  { label: "Apresentação Institucional", href: "#apresentacao" },
-  { label: "Mailing", href: "#mailing" },
-  { label: "Contato com RI", href: "#contato" },
-];
+const cls =
+  "group inline-flex items-center justify-center rounded-full bg-primary px-7 lg:px-9 py-4 text-center text-[12px] font-bold uppercase tracking-[0.14em] text-primary-foreground shadow-brand hover:bg-primary-deep hover:-translate-y-0.5 transition-all duration-300";
 
 export function QuickActions() {
+  const { state } = useContent();
+  const actions = [...state.quickActions]
+    .filter((a) => a.visivel)
+    .sort((a, b) => a.ordem - b.ordem);
+
   return (
     <section className="relative -mt-16 z-20">
       <div className="mx-auto max-w-[1500px] px-6 lg:px-10">
@@ -22,20 +24,23 @@ export function QuickActions() {
           }}
           className="flex flex-wrap items-center justify-center gap-3 lg:gap-4"
         >
-          {ACTIONS.map((action) => (
+          {actions.map((action) => (
             <motion.li
-              key={action.label}
+              key={action.id}
               variants={{
                 hidden: { opacity: 0, y: 12 },
                 visible: { opacity: 1, y: 0 },
               }}
             >
-              <a
-                href={action.href}
-                className="group inline-flex items-center justify-center rounded-full bg-primary px-7 lg:px-9 py-4 text-center text-[12px] font-bold uppercase tracking-[0.14em] text-primary-foreground shadow-brand hover:bg-primary-deep hover:-translate-y-0.5 transition-all duration-300"
-              >
-                {action.label}
-              </a>
+              {action.href.startsWith("/") ? (
+                <Link to={action.href} className={cls}>
+                  {action.label}
+                </Link>
+              ) : (
+                <a href={action.href} className={cls}>
+                  {action.label}
+                </a>
+              )}
             </motion.li>
           ))}
         </motion.ul>

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -8,13 +8,16 @@ import {
   Settings,
   LogOut,
   Layers,
+  UserCog,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { useAuth } from "@/store/auth";
 import { cn } from "@/lib/utils";
 
 const NAV_OPERACAO = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/admin/investidores", label: "Investidores", icon: Users },
+  { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
   { to: "/admin/campanhas", label: "Campanhas", icon: Send },
 ];
 
@@ -55,6 +58,16 @@ function NavItem({
 }
 
 export function Sidebar() {
+  const navigate = useNavigate();
+  const { usuario, logout } = useAuth();
+  const nome = usuario?.nome ?? "Administrador";
+  const inicial = nome.charAt(0).toUpperCase();
+
+  const sair = async () => {
+    await logout();
+    navigate("/admin/login", { replace: true });
+  };
+
   return (
     <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-surface-dark text-surface-dark-foreground border-r border-white/5">
       <div className="px-6 pt-7 pb-5 border-b border-white/5">
@@ -94,17 +107,18 @@ export function Sidebar() {
       <div className="px-3 pb-5 border-t border-white/5 pt-4 mt-1">
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-primary-glow font-display font-bold text-sm">
-            V
+            {inicial}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-white truncate">
-              Vitão Uli
+              {nome}
             </div>
             <div className="text-[11px] text-white/50 truncate">
-              Administrador
+              Super Admin
             </div>
           </div>
           <button
+            onClick={sair}
             aria-label="Sair"
             className="h-8 w-8 rounded-md flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-colors"
           >

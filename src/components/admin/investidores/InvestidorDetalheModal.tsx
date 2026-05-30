@@ -22,7 +22,8 @@ import {
   type StatusInvestidor,
   type OrigemInvestidor,
 } from "@/store/investors";
-import { HISTORICO, type CanalEnvio } from "@/mock/historico";
+import { type CanalEnvio, type EnvioLog } from "@/mock/historico";
+import { getHistorico } from "@/lib/api/historico";
 import { cn } from "@/lib/utils";
 
 type Aba = "dados" | "historico" | "atividade";
@@ -70,19 +71,30 @@ export function InvestidorDetalheModal({
   const { dispatch } = useInvestors();
   const [aba, setAba] = useState<Aba>("dados");
   const [editForm, setEditForm] = useState<Investidor | null>(null);
+  const [historico, setHistorico] = useState<EnvioLog[]>([]);
 
   useEffect(() => {
+    // Sincroniza o formulário com o investidor selecionado ao abrir.
     if (investidor) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setEditForm(investidor);
       setAba("dados");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [investidor]);
+
+  useEffect(() => {
+    if (!open) return;
+    getHistorico()
+      .then(setHistorico)
+      .catch((e) => console.error("[investidor-detalhe] erro ao carregar histórico:", e));
+  }, [open]);
 
   if (!open || !investidor || !editForm) return null;
 
   const dirty = JSON.stringify(editForm) !== JSON.stringify(investidor);
 
-  const historicoInvestidor = HISTORICO.filter(
+  const historicoInvestidor = historico.filter(
     (e) =>
       e.destinatarioContato.includes(investidor.email) ||
       e.destinatarioContato.includes(

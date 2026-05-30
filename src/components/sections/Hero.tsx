@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { useContent } from "@/store/content";
 
@@ -37,18 +38,20 @@ export function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <motion.button
-              whileHover={{ y: -1 }}
-              whileTap={{ y: 0 }}
+            <Link
+              to="/em-construcao"
               className="inline-flex items-center gap-3 rounded-full bg-primary px-7 py-3.5 text-[13px] font-bold uppercase tracking-[0.12em] text-primary-foreground shadow-brand transition-shadow hover:shadow-elevated"
             >
               {t.ctaLabel}
               <ArrowRight className="h-4 w-4" />
-            </motion.button>
-            <button className="inline-flex items-center gap-2 px-2 py-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-foreground hover:text-primary transition-colors">
+            </Link>
+            <Link
+              to="/contato"
+              className="inline-flex items-center gap-2 px-2 py-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-foreground hover:text-primary transition-colors"
+            >
               {t.ctaSecundarioLabel}
               <ArrowRight className="h-4 w-4 opacity-60" />
-            </button>
+            </Link>
           </div>
         </motion.div>
       </div>

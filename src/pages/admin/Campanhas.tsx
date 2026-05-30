@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -13,12 +13,13 @@ import {
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import {
-  CAMPANHAS,
   CANAL_LABEL,
   STATUS_CAMPANHA_LABEL,
+  type Campanha,
   type CanalCampanha,
   type StatusCampanha,
 } from "@/mock/campanhas";
+import { getCampanhas } from "@/lib/api/campanhas";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTS: StatusCampanha[] = [
@@ -54,8 +55,16 @@ export function Campanhas() {
     "todos"
   );
 
+  const [campanhas, setCampanhas] = useState<Campanha[]>([]);
+
+  useEffect(() => {
+    getCampanhas()
+      .then(setCampanhas)
+      .catch((e) => console.error("[campanhas] erro ao carregar:", e));
+  }, []);
+
   const filtradas = useMemo(() => {
-    let arr = CAMPANHAS;
+    let arr = campanhas;
     if (filtroStatus !== "todos") arr = arr.filter((c) => c.status === filtroStatus);
     if (busca.trim()) {
       const q = busca.toLowerCase();
@@ -66,15 +75,15 @@ export function Campanhas() {
       );
     }
     return [...arr].sort((a, b) => b.criadaEm.localeCompare(a.criadaEm));
-  }, [busca, filtroStatus]);
+  }, [busca, filtroStatus, campanhas]);
 
   const stats = useMemo(() => {
-    const enviando = CAMPANHAS.filter((c) => c.status === "enviando").length;
-    const agendadas = CAMPANHAS.filter((c) => c.status === "agendada").length;
-    const concluidas = CAMPANHAS.filter((c) => c.status === "concluida").length;
-    const totalEnviado = CAMPANHAS.reduce((acc, c) => acc + c.entregues, 0);
+    const enviando = campanhas.filter((c) => c.status === "enviando").length;
+    const agendadas = campanhas.filter((c) => c.status === "agendada").length;
+    const concluidas = campanhas.filter((c) => c.status === "concluida").length;
+    const totalEnviado = campanhas.reduce((acc, c) => acc + c.entregues, 0);
     return { enviando, agendadas, concluidas, totalEnviado };
-  }, []);
+  }, [campanhas]);
 
   return (
     <>
@@ -128,7 +137,7 @@ export function Campanhas() {
               <Chip
                 active={filtroStatus === "todos"}
                 onClick={() => setFiltroStatus("todos")}
-                label={`Todas (${CAMPANHAS.length})`}
+                label={`Todas (${campanhas.length})`}
               />
               {STATUS_OPTS.map((s) => (
                 <Chip

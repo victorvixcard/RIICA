@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
 import { useContent } from "@/store/content";
+import { PlaceholderEmBreve } from "@/components/PlaceholderEmBreve";
 
 export function Purpose() {
   const { state } = useContent();
   const p = state.textos.purpose;
   const kpis = state.textos.kpis;
+  const temKpis = kpis.length > 0;
 
   return (
     <section className="relative py-24 lg:py-36 overflow-hidden border-t border-border bg-card/50">
@@ -30,41 +32,49 @@ export function Purpose() {
             {p.descricao}
           </p>
 
-          <div className="mt-10 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="h-px w-10 bg-border" />
-            {p.kpisEyebrow}
-            <span className="h-px w-10 bg-border" />
-          </div>
+          {temKpis && (
+            <div className="mt-10 flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="h-px w-10 bg-border" />
+              {p.kpisEyebrow}
+              <span className="h-px w-10 bg-border" />
+            </div>
+          )}
         </motion.div>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={{
-            hidden: { opacity: 0 },
-            visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
-          }}
-          className="mt-14 grid grid-cols-2 lg:grid-cols-6 gap-px rounded-xl border border-border bg-border overflow-hidden shadow-soft"
-        >
-          {kpis.map((stat) => (
-            <motion.div
-              key={stat.id}
-              variants={{
-                hidden: { opacity: 0, y: 12 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              className="flex flex-col items-center justify-center bg-background px-6 py-10 text-center"
-            >
-              <div className="font-display text-3xl lg:text-4xl font-extrabold text-foreground">
-                {stat.valor}
-              </div>
-              <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {stat.label}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+        {temKpis ? (
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+            }}
+            className="mt-14 grid grid-cols-2 lg:grid-cols-6 gap-px rounded-xl border border-border bg-border overflow-hidden shadow-soft"
+          >
+            {kpis.map((stat) => (
+              <motion.div
+                key={stat.id}
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="flex flex-col items-center justify-center bg-background px-6 py-10 text-center"
+              >
+                <div className="font-display text-3xl lg:text-4xl font-extrabold text-foreground">
+                  {stat.valor}
+                </div>
+                <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="mt-14 max-w-md mx-auto">
+            <PlaceholderEmBreve tipo="Os números do Grupo ICA" />
+          </div>
+        )}
       </div>
     </section>
   );
