@@ -1,13 +1,13 @@
 ---
 tags: [riica, banco, modelo-de-dados, schema]
-atualizado: 2026-05-29
+atualizado: 2026-06-04
 ---
 
 # 04 — Modelo de Dados
 
 ← [[RIICA — Índice]]
 
-24 tabelas no schema `public`, agrupadas por domínio. Colunas em snake_case.
+25 tabelas no schema `public`, agrupadas por domínio. Colunas em snake_case. Todas com RLS habilitada (Fase 2).
 
 ## CMS / Conteúdo
 
@@ -39,8 +39,14 @@ Cotações no header. `id, simbolo, preco, variacao, positivo, ordem`.
 - **`quick_actions`** — botões abaixo do hero: `label, href, ordem, visivel`
 - **`footer_colunas`** + **`footer_links`** (link→coluna) — colunas de links do rodapé
 - **`redes_sociais`** — `tipo` (linkedin/instagram/facebook/youtube/x/email/telefone), `url, ordem`
-- **`site_config`** (singleton, id=1) — `institucional_url, footer_descricao, footer_cnpj, footer_endereco, footer_copyright`
+- **`site_config`** (singleton, id=1) — `institucional_url, footer_descricao, footer_cnpj, footer_endereco, footer_copyright`. RLS de SELECT pública corrigida no hotfix `20260604000002`.
 - **`faqs`** — `pergunta, resposta, categoria, ordem, publicado`
+
+### `fatos_relevantes` (migration 4 — 2026-06-04)
+Lista timeline da seção "Fatos Relevantes" da home. `id (uuid), data (date), tag (text, ex: COMUNICADO OFICIAL / AVISO AO MERCADO / FATO RELEVANTE), titulo, resumo, url, publicado, ordem, created_at, updated_at`. RLS: anon lê `publicado=true`; `super_admin` faz tudo.
+
+### `usuarios` (migration 3 — Fase 2)
+Identidades de quem usa o sistema (super_admin ou investidor). `id (uuid), auth_id (→auth.users), nome, email, cpf (único), papel, status (ativo/inativo), criado_em, atualizado_em`. Vincula-se com Supabase Auth via `auth_id`. RLS: super_admin gere todos; cada usuário lê o próprio perfil.
 
 ## Investidores
 

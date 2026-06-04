@@ -1,6 +1,6 @@
 ---
 tags: [riica, indice, moc]
-atualizado: 2026-05-29
+atualizado: 2026-06-04
 ---
 
 # 🏛️ RIICA — Portal de Relações com Investidores do Grupo ICA
@@ -11,8 +11,11 @@ atualizado: 2026-05-29
 
 Portal de **Relações com Investidores (RI)** do **Grupo ICA**. Uma única SPA (React) que entrega **três experiências** num mesmo app, com backend **Supabase** (Postgres + Auth + Storage).
 
-Repositório: `github.com/victorvixcard/RIICA`
-Pasta local: `C:\Users\Administrador\OneDrive\Desktop\Sistemas\Ri-ica`
+- Repositório: `github.com/victorvixcard/RIICA`
+- Pasta local: `C:\Users\Administrador\OneDrive\Desktop\Sistemas\Ri-ica`
+- Domínio: `icaportalri.com.br` (apontamento DNS em andamento)
+- Hospedagem frontend: **Vercel** (deploy automático ao push em `main`)
+- Hospedagem backend: **Supabase Cloud — sa-east-1 (São Paulo)**
 
 ## Mapa da documentação
 
@@ -28,8 +31,9 @@ Pasta local: `C:\Users\Administrador\OneDrive\Desktop\Sistemas\Ri-ica`
 
 ## Estado atual (resumo)
 
-- ✅ **Fase 1** — dados + CRUDs ligados ao Supabase (sem autenticação real)
-- ✅ **CMS total (prioridades 1–2)** — Navegação, Ações rápidas, Rodapé e FAQ editáveis
-- ⏳ **Pendente** — editor do Financeiro, páginas das seções de menu, **autenticação real (Fase 2)**, hospedagem
-
-> ⚠️ **Hoje não há login real**: qualquer credencial entra. Ver [[08 — Acessos e Credenciais]] e [[09 — Roadmap e Fases]].
+- ✅ **Fase 1** — dados + CRUDs ligados ao Supabase
+- ✅ **Fase 2** — autenticação real (Supabase Auth + RLS + papéis super_admin/investidor)
+- ✅ **CMS total** — todos os blocos do portal editáveis: textos, navegação, ações rápidas, rodapé, FAQ, comunicados, eventos, documentos, kit, **fatos relevantes**
+- ✅ **Deploy produção** — Vercel + Supabase Cloud SP rodando
+- ✅ **Reestruturação da home (2026-06-04)** — Logo "GRUPO ICA", Hero com imagem da skyline de Salvador em duotone verde, 4 Princípios institucionais, seção Fatos Relevantes (CMS), Aviso Legal regulatório
+- ⏳ **Pendente** — editor do Financeiro no admin, sub-páginas (Diretoria Executiva, Políticas de Governança, Calendário), Resend + Edge Function pra e-mail real, finalizar apontamento DNS do domínio

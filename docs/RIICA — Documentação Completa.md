@@ -2,7 +2,7 @@
 tags: [riica, documentacao, sistema]
 projeto: RIICA — Portal de Relações com Investidores do Grupo ICA
 repositorio: github.com/victorvixcard/RIICA
-atualizado: 2026-05-29
+atualizado: 2026-06-04
 ---
 
 # 🏛️ RIICA — Documentação Completa do Sistema
@@ -24,13 +24,14 @@ atualizado: 2026-05-29
 10. [Modo "Em Breve" do Portal](#10--modo-em-breve-do-portal)
 11. [Roadmap e Fases](#11--roadmap-e-fases)
 
-### Estado atual (snapshot 2026-05-29)
-- ✅ **Backend Supabase** completo (5 migrations, seed, RLS)
-- ✅ **Autenticação real** (Fase 2): Supabase Auth, papéis, login admin + investidor, **RLS habilitada**
-- ✅ **CMS total**: Navegação, Ações rápidas, Rodapé, FAQ, Textos, Comunicados, Eventos, Documentos, Kit — todos editáveis pelo admin
-- ✅ **Gestão de Usuários** com geração/envio de credenciais por e-mail (dev via Mailpit)
-- ✅ **Modo "Em breve"** ligado em todo o portal: ticker removido, KPIs zerados, demonstrações financeiras com placeholder, links levam a páginas em construção
-- ⏳ **Pendente**: editor do Financeiro (DRE/Balanço) no admin, páginas reais das seções de menu (Governança, Ação, Serviços), e-mail de produção via Resend
+### Estado atual (snapshot 2026-06-04)
+- ✅ **Backend Supabase Cloud SP (sa-east-1)** rodando — 7 migrations, RLS, seed
+- ✅ **Autenticação real** (Fase 2): Supabase Auth, papéis, login admin + investidor, **RLS em todas as tabelas**
+- ✅ **CMS total** + bloco novo **Fatos Relevantes** (`fatos_relevantes`) — todos os blocos do portal editáveis pelo admin
+- ✅ **Reestruturação da home** (2026-06-04): Logo "GRUPO ICA", botão "Fale com RI", Hero com imagem da skyline de Salvador em **duotone verde**, 4 Princípios, seção Fatos Relevantes, Aviso Legal regulatório, páginas `/quem-somos` e `/fale-com-ri`
+- ✅ **Deploy produção**: Vercel auto-deploy via GitHub + Supabase Cloud
+- ✅ **CNPJ + razão social oficiais**: ICA Soluções Financeiras S/A · CNPJ 37.468.454/0001-00 · Salvador, Bahia
+- ⏳ **Pendente**: editor do Financeiro (DRE/Balanço), sub-páginas (Diretoria, Governança, Calendário), Resend pra e-mail de produção, apontamento final do domínio `icaportalri.com.br`
 
 ---
 
@@ -60,8 +61,11 @@ O RIICA é o portal de **Relações com Investidores** do **Grupo ICA** — ecos
 
 ### Histórico de decisões
 - **2026-05-29** — Backend: **Supabase local via Docker**. Estratégia: dados/CRUDs primeiro, autenticação por último (concluída ainda no mesmo dia após validação dos fluxos).
-- Grupo ICA comprou um **domínio `.br`** (registro.br) — hospedagem decidida: gerenciada (Vercel/Cloudflare Pages + Supabase Cloud + Resend).
-- O Portal está em **modo "Em breve"** — placeholders prontos para receber dados reais quando o conteúdo for liberado.
+- Grupo ICA comprou um **domínio `.br`** (registro.br) — hospedagem decidida: gerenciada (Vercel + Supabase Cloud SP + Resend).
+- **Migração para Supabase Cloud sa-east-1** (LGPD/latência) — Fase 2 (RLS + Auth) aplicada já no Cloud.
+- **Deploy Vercel** via auto-deploy a partir do `main` no GitHub.
+- **Fluxo de trabalho:** rodar dev local apontando pro Cloud (`.env.local`), validar visualmente, só então commit + push.
+- **2026-06-04** — Reestruturação completa da home: nova identidade visual, novos blocos (4 Princípios, Fatos Relevantes, Aviso Legal), Hero com imagem em duotone verde, páginas institucionais `/quem-somos` e `/fale-com-ri`.
 
 ---
 
@@ -524,3 +528,55 @@ Estado atual: o portal está **preparado para receber dados reais** mas com card
 ---
 
 *Documento gerado em 2026-05-29 — versão consolidada das notas individuais em `docs/`. Repositório: github.com/victorvixcard/RIICA — commit `1bb9b1f`.*
+
+---
+
+## 12 — Changelog 2026-06-04
+
+### Reestruturação completa da home
+
+**Frontend:**
+- Logo redesenhado: "GRUPO ICA" em maiúsculo (mantém o gradiente verde).
+- Botão "Área do Investidor" → "Fale com RI" (verde, ícone de envelope, leva pra `/fale-com-ri`).
+- Hero novo:
+  - Layout split 55/45 (texto à esquerda, imagem à direita; imagem some em mobile).
+  - Título: "Governança que protege quem confia em nós" + descrição institucional.
+  - **Imagem da skyline corporativa de Salvador** com tratamento duotone via SVG `feColorMatrix` (verde #0d3d1f + creme #f5efe4).
+  - Animação Ken Burns (zoom 1.02 ↔ 1.10 em 22s, ida-volta).
+  - Selo flutuante "PORTAL R.I." + faixa "SALVADOR · BAHIA".
+  - Vinheta verde nos cantos + film grain SVG sutil + soft mask na borda esquerda.
+- **4 Princípios** institucionais (Transparência / Governança Sólida / Criação de Valor / Impacto Social) substituem o antigo `InfoGrid`.
+- Nova seção **"Fatos Relevantes"** em timeline — faixa escura com título + lista de comunicados (data + tag + título + resumo + URL).
+- Nova seção **"Aviso Legal"** discreta antes do footer, com texto regulatório (Lei 6.385/76 + CVM) + razão social + CNPJ + cidade vindos do CMS.
+- Componentes `InfoGrid.tsx` e `Purpose.tsx` deletados (dead code).
+- Página `/quem-somos` nova (texto institucional do propósito do grupo).
+- Página `/fale-com-ri` nova (cards de contato + formulário com envio simulado).
+
+**Backend (Supabase Cloud SP):**
+- Migration `20260604000001_fatos_relevantes.sql` — nova tabela `fatos_relevantes` (id uuid, data, tag, titulo, resumo, url, publicado, ordem, timestamps) + RLS (anon lê publicados, super_admin tudo).
+- Hotfix `20260604000002_rls_site_config_fix.sql` — `site_config` foi esquecida da lista de tabelas com policy de SELECT pública em `20260529000005_rls.sql`; corrigido.
+- Atualização da row `site_config` no Cloud: CNPJ `37.468.454/0001-00`, endereço `ICA Soluções Financeiras S/A · Salvador, Bahia`.
+- Seed de 3 fatos relevantes fictícios populado no Cloud pelo script `setup-cloud-fatos-relevantes.mjs`.
+
+**Admin / CMS:**
+- Nova tela `/admin/conteudo/fatos-relevantes` com CRUD completo (criar, editar, excluir, publicar/rascunho, datalist de tags sugeridas).
+- Card "Fatos Relevantes" adicionado ao overview `/admin/conteudo`.
+- Tela `/admin/conteudo/textos` simplificada — só aba Hero (abas Purpose/KPIs/Ticker removidas porque os componentes correspondentes foram deletados).
+- Aviso Legal lê CNPJ/razão social do mesmo `site_config` que o rodapé → **single source of truth**.
+
+**Scripts Node:**
+- `scripts/setup-cloud-fatos-relevantes.mjs` — popula 3 fatos demo (idempotente, faz delete antes de insert).
+- `scripts/update-cloud-cnpj.mjs` — atualiza CNPJ + endereço no `site_config` do Cloud.
+
+**Commits do dia:**
+- `973974d` — Fase 1 reestruturação (Logo, Fale com RI, /quem-somos, /fale-com-ri)
+- `200bd9a` — Princípios, Fatos Relevantes (CMS), Aviso Legal, Hero com imagem duotone
+- `6d64524` — Fallback demo dos Fatos Relevantes (transitório, some quando o CMS tem dados)
+- `ad3148c` — Hotfix RLS policy `site_config`
+
+**Pendências de 2026-06-04 (rodada anterior):**
+- Editor do Financeiro no admin
+- Sub-páginas: Diretoria Executiva, Políticas de Governança, Calendário de Eventos
+- Backend: novas tabelas `diretores` e `doc_categorias`
+- Resend + Edge Function de e-mail real
+- Apontamento final do domínio `icaportalri.com.br`
