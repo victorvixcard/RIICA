@@ -10,6 +10,8 @@ import { InvestorProvider } from "@/store/investors";
 import { PortalRI } from "@/pages/PortalRI";
 import { Demonstracoes } from "@/pages/Demonstracoes";
 import { PaginaEmBreve } from "@/pages/PaginaEmBreve";
+import { QuemSomos } from "@/pages/QuemSomos";
+import { FaleComRi } from "@/pages/FaleComRi";
 import { LoginInvestidor } from "@/pages/investidor/Login";
 import { AreaInvestidor } from "@/pages/investidor/Area";
 import { LoginAdmin } from "@/pages/admin/Login";
@@ -43,6 +45,8 @@ function App() {
             {/* Portal R.I. público */}
             <Route path="/" element={<PortalRI />} />
             <Route path="/demonstracoes" element={<Demonstracoes />} />
+            <Route path="/quem-somos" element={<QuemSomos />} />
+            <Route path="/fale-com-ri" element={<FaleComRi />} />
 
             {/* Páginas placeholder (em construção / em breve) */}
             <Route

@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useContent } from "@/store/content";
 
 export function Hero() {
@@ -22,10 +21,12 @@ export function Hero() {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="max-w-3xl"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            {t.eyebrow}
-          </div>
+          {t.eyebrow && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              {t.eyebrow}
+            </div>
+          )}
 
           <h1 className="mt-7 font-display text-4xl lg:text-[64px] font-extrabold leading-[1.05] tracking-tight text-foreground">
             {t.tituloLinha1}
@@ -37,22 +38,6 @@ export function Hero() {
             {t.descricao}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Link
-              to="/em-construcao"
-              className="inline-flex items-center gap-3 rounded-full bg-primary px-7 py-3.5 text-[13px] font-bold uppercase tracking-[0.12em] text-primary-foreground shadow-brand transition-shadow hover:shadow-elevated"
-            >
-              {t.ctaLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/contato"
-              className="inline-flex items-center gap-2 px-2 py-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-foreground hover:text-primary transition-colors"
-            >
-              {t.ctaSecundarioLabel}
-              <ArrowRight className="h-4 w-4 opacity-60" />
-            </Link>
-          </div>
         </motion.div>
       </div>
 

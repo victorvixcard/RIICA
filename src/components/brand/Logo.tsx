@@ -24,7 +24,7 @@ export function Logo({ className, variant = "default" }: LogoProps) {
             isInverse ? "text-primary-glow" : "text-primary"
           )}
         >
-          Ica
+          ICA
         </span>
       </div>
       <div

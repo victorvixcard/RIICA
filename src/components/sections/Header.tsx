@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, Search, Lock } from "lucide-react";
+import { ChevronDown, Search, Mail } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import { useContent } from "@/store/content";
@@ -44,11 +44,11 @@ export function Header() {
               Institucional
             </a>
             <Link
-              to="/investidor/login"
+              to="/fale-com-ri"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary-deep transition-colors shadow-brand"
             >
-              <Lock className="h-3.5 w-3.5" />
-              Área do Investidor
+              <Mail className="h-3.5 w-3.5" />
+              Fale com RI
             </Link>
             <div className="hidden sm:flex items-center gap-0.5 rounded-full border border-border px-0.5 text-[11px] font-semibold">
               <button className="rounded-full bg-foreground px-2.5 py-1 text-background">

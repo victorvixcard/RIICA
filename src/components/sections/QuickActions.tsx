@@ -37,7 +37,7 @@ export function QuickActions() {
                   {action.label}
                 </Link>
               ) : (
-                <a href={action.href} className={cls}>
+                <a href={action.href} target="_blank" rel="noopener noreferrer" className={cls}>
                   {action.label}
                 </a>
               )}
