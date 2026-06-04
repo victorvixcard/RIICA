@@ -34,6 +34,7 @@ import { ConteudoNavegacao } from "@/pages/admin/ConteudoNavegacao";
 import { ConteudoAcoesRapidas } from "@/pages/admin/ConteudoAcoesRapidas";
 import { ConteudoRodape } from "@/pages/admin/ConteudoRodape";
 import { ConteudoFaq } from "@/pages/admin/ConteudoFaq";
+import { ConteudoFatosRelevantes } from "@/pages/admin/ConteudoFatosRelevantes";
 
 function App() {
   return (
@@ -114,6 +115,7 @@ function App() {
               <Route path="conteudo/acoes" element={<ConteudoAcoesRapidas />} />
               <Route path="conteudo/rodape" element={<ConteudoRodape />} />
               <Route path="conteudo/faq" element={<ConteudoFaq />} />
+              <Route path="conteudo/fatos-relevantes" element={<ConteudoFatosRelevantes />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

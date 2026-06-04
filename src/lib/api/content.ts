@@ -14,6 +14,7 @@ import type {
   RedeSocial,
   SiteConfig,
   Faq,
+  FatoRelevante,
 } from "@/store/types";
 
 // ============================================================
@@ -51,6 +52,17 @@ interface EventoRow {
   local: string | null;
   link_inscricao: string | null;
   publicado: boolean;
+}
+
+interface FatoRelevanteRow {
+  id: string;
+  data: string;
+  tag: string;
+  titulo: string;
+  resumo: string | null;
+  url: string | null;
+  publicado: boolean;
+  ordem: number;
 }
 
 // ============================================================
@@ -93,6 +105,31 @@ function toEvento(r: EventoRow): Evento {
     local: r.local ?? undefined,
     linkInscricao: r.link_inscricao ?? undefined,
     publicado: r.publicado,
+  };
+}
+
+function toFatoRelevante(r: FatoRelevanteRow): FatoRelevante {
+  return {
+    id: r.id,
+    data: r.data,
+    tag: r.tag,
+    titulo: r.titulo,
+    resumo: r.resumo ?? undefined,
+    url: r.url ?? undefined,
+    publicado: r.publicado,
+    ordem: r.ordem,
+  };
+}
+
+function fromFatoRelevante(f: Omit<FatoRelevante, "id"> | FatoRelevante) {
+  return {
+    data: f.data,
+    tag: f.tag,
+    titulo: f.titulo,
+    resumo: f.resumo ?? null,
+    url: f.url ?? null,
+    publicado: f.publicado,
+    ordem: f.ordem,
   };
 }
 
@@ -155,6 +192,7 @@ export async function getContent(): Promise<ContentState> {
     redesRes,
     configRes,
     faqsRes,
+    fatosRelevantesRes,
   ] = await Promise.all([
     supabase.from("documentos").select("*").order("data_publicacao", { ascending: false }),
     supabase.from("comunicados").select("*").order("data", { ascending: false }),
@@ -170,7 +208,21 @@ export async function getContent(): Promise<ContentState> {
     supabase.from("redes_sociais").select("*").order("ordem", { ascending: true }),
     supabase.from("site_config").select("*").eq("id", 1).maybeSingle(),
     supabase.from("faqs").select("*").order("ordem", { ascending: true }),
+    supabase
+      .from("fatos_relevantes")
+      .select("*")
+      .order("data", { ascending: false }),
   ]);
+
+  // Resultado opcional — a tabela fatos_relevantes pode ainda não existir
+  // num ambiente onde a migration não foi aplicada (resiliência durante rollout).
+  const fatosResData = fatosRelevantesRes.error ? [] : (fatosRelevantesRes.data ?? []);
+  if (fatosRelevantesRes.error) {
+    console.warn(
+      "[content] fatos_relevantes indisponível (talvez a migration ainda não foi aplicada):",
+      fatosRelevantesRes.error.message
+    );
+  }
 
   const erros = [
     documentosRes.error,
@@ -264,7 +316,27 @@ export async function getContent(): Promise<ContentState> {
     redesSociais: (redesRes.data ?? []) as RedeSocial[],
     config,
     faqs: (faqsRes.data ?? []) as Faq[],
+    fatosRelevantes: (fatosResData as FatoRelevanteRow[]).map(toFatoRelevante),
   };
+}
+
+// ============================================================
+// CRUD — Fatos Relevantes
+// ============================================================
+export async function createFatoRelevante(payload: Omit<FatoRelevante, "id">) {
+  const { error } = await supabase.from("fatos_relevantes").insert(fromFatoRelevante(payload));
+  if (error) throw error;
+}
+export async function updateFatoRelevante(f: FatoRelevante) {
+  const { error } = await supabase
+    .from("fatos_relevantes")
+    .update(fromFatoRelevante(f))
+    .eq("id", f.id);
+  if (error) throw error;
+}
+export async function deleteFatoRelevante(id: string) {
+  const { error } = await supabase.from("fatos_relevantes").delete().eq("id", id);
+  if (error) throw error;
 }
 
 // ============================================================

@@ -177,6 +177,19 @@ export interface Faq {
   publicado: boolean;
 }
 
+export interface FatoRelevante {
+  id: string;
+  data: string; // ISO
+  /** Categoria/tag exibida acima do título — ex: "COMUNICADO OFICIAL", "AVISO AO MERCADO" */
+  tag: string;
+  titulo: string;
+  resumo?: string;
+  /** URL externa ou interna (hiperlink do item) */
+  url?: string;
+  publicado: boolean;
+  ordem: number;
+}
+
 export interface ContentState {
   version: number;
   comunicados: Comunicado[];
@@ -191,4 +204,5 @@ export interface ContentState {
   redesSociais: RedeSocial[];
   config: SiteConfig;
   faqs: Faq[];
+  fatosRelevantes: FatoRelevante[];
 }

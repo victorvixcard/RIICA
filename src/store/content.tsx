@@ -21,6 +21,7 @@ import type {
   RedeSocial,
   SiteConfig,
   Faq,
+  FatoRelevante,
 } from "./types";
 import { SEED } from "./seed";
 import * as contentApi from "@/lib/api/content";
@@ -47,6 +48,9 @@ type Action =
   | { type: "faq/create"; payload: Omit<Faq, "id"> }
   | { type: "faq/update"; payload: Faq }
   | { type: "faq/delete"; payload: { id: string } }
+  | { type: "fato/create"; payload: Omit<FatoRelevante, "id"> }
+  | { type: "fato/update"; payload: FatoRelevante }
+  | { type: "fato/delete"; payload: { id: string } }
   | { type: "reset" };
 
 function genId(prefix: string) {
@@ -165,6 +169,29 @@ function reducer(state: ContentState, action: Action): ContentState {
         faqs: state.faqs.filter((f) => f.id !== action.payload.id),
       };
 
+    case "fato/create":
+      return {
+        ...state,
+        fatosRelevantes: [
+          { ...action.payload, id: genId("fato") },
+          ...state.fatosRelevantes,
+        ],
+      };
+    case "fato/update":
+      return {
+        ...state,
+        fatosRelevantes: state.fatosRelevantes.map((f) =>
+          f.id === action.payload.id ? action.payload : f
+        ),
+      };
+    case "fato/delete":
+      return {
+        ...state,
+        fatosRelevantes: state.fatosRelevantes.filter(
+          (f) => f.id !== action.payload.id
+        ),
+      };
+
     case "reset":
       return state; // re-seed do DB não é feito pelo cliente; refetch recarrega
 
@@ -214,6 +241,12 @@ async function persist(action: Action): Promise<void> {
       return contentApi.updateFaq(action.payload);
     case "faq/delete":
       return contentApi.deleteFaq(action.payload.id);
+    case "fato/create":
+      return contentApi.createFatoRelevante(action.payload);
+    case "fato/update":
+      return contentApi.updateFatoRelevante(action.payload);
+    case "fato/delete":
+      return contentApi.deleteFatoRelevante(action.payload.id);
     case "reset":
       return Promise.resolve();
   }

@@ -12,6 +12,7 @@ import {
   MousePointerClick,
   PanelBottom,
   HelpCircle,
+  Newspaper,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { useContent } from "@/store/content";
@@ -78,6 +79,7 @@ export function ConteudoOverview() {
   const comunicadosPub = state.comunicados.filter((c) => c.publicado).length;
   const eventosPub = state.eventos.filter((e) => e.publicado).length;
   const docsPub = state.documentos.filter((d) => d.publico).length;
+  const fatosPub = state.fatosRelevantes.filter((f) => f.publicado).length;
 
   const onRecarregar = () => {
     void refetch();
@@ -180,9 +182,10 @@ export function ConteudoOverview() {
                 to="/admin/conteudo/textos"
                 icon={Type}
                 title="Textos institucionais"
-                description="Hero, propósito, KPIs do 'Grupo ICA em números' e ticker de cotações."
-                count={state.textos.kpis.length}
-                countLabel="KPIs cadastrados"
+                description="Título, descrição e eyebrow do Hero da home — editar reflete imediatamente no portal."
+                count={1}
+                countLabel="bloco editável"
+                status="Hero"
               />
               <SectionCard
                 to="/admin/conteudo/navegacao"
@@ -219,6 +222,15 @@ export function ConteudoOverview() {
                 count={state.faqs.length}
                 countLabel="perguntas"
                 status={`${state.faqs.filter((f) => f.publicado).length} publicadas`}
+              />
+              <SectionCard
+                to="/admin/conteudo/fatos-relevantes"
+                icon={Newspaper}
+                title="Fatos Relevantes"
+                description="Comunicados oficiais, avisos ao mercado e atos societários — bloco em destaque na home."
+                count={state.fatosRelevantes.length}
+                countLabel="cadastrados"
+                status={`${fatosPub} publicados`}
               />
             </div>
           </div>

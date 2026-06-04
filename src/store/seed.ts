@@ -243,8 +243,8 @@ export const SEED: ContentState = {
     institucionalUrl: "https://seugrupoica.com.br",
     footerDescricao:
       "Relações com Investidores do Grupo ICA — transparência, governança e comunicação direta com nossos acionistas.",
-    footerCnpj: "CNPJ 00.000.000/0001-00",
-    footerEndereco: "Rua Exemplo, 1000 — Vitória/ES — Brasil",
+    footerCnpj: "CNPJ 37.468.454/0001-00",
+    footerEndereco: "ICA Soluções Financeiras S/A · Salvador, Bahia",
     footerCopyright: "© 2026 Grupo ICA. Todos os direitos reservados.",
   },
   faqs: [
@@ -253,4 +253,5 @@ export const SEED: ContentState = {
     { id: "faq-3", pergunta: "Como entro em contato com o time de RI?", resposta: "Use o botão \"Contato com RI\" no portal ou escreva para ri@grupoica.com.br.", categoria: "Contato", ordem: 2, publicado: true },
     { id: "faq-4", pergunta: "Quando ocorre a próxima teleconferência?", resposta: "As datas das teleconferências e demais eventos ficam na agenda \"Próximos Eventos\" da home.", categoria: "Eventos", ordem: 3, publicado: true },
   ],
+  fatosRelevantes: [],
 };
