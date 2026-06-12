@@ -1,4 +1,5 @@
-import { Mail, Phone, Link as LinkIcon } from "lucide-react";
+import { Mail, Phone, Link as LinkIcon, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Logo } from "@/components/brand/Logo";
 import { useContent } from "@/store/content";
 import type { TipoRedeSocial } from "@/store/types";
@@ -115,7 +116,16 @@ export function Footer() {
             {config.footerCopyright}
             {config.footerCnpj ? ` ${config.footerCnpj}` : ""}
           </p>
-          <p className="text-[12px] text-white/50">{config.footerEndereco}</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <p className="text-[12px] text-white/50">{config.footerEndereco}</p>
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center gap-1.5 text-[12px] text-white/40 hover:text-primary-glow transition-colors"
+            >
+              <Lock className="h-3 w-3" />
+              Acesso restrito
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -32,16 +32,19 @@ function NavItem({
   label,
   icon: Icon,
   end,
+  onNavigate,
 }: {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
   end?: boolean;
+  onNavigate?: () => void;
 }) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onNavigate}
       className={({ isActive }) =>
         cn(
           "group flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium transition-colors",
@@ -57,19 +60,24 @@ function NavItem({
   );
 }
 
-export function Sidebar() {
+/**
+ * Conteúdo interno da sidebar — reutilizado tanto no aside fixo (desktop)
+ * quanto no drawer mobile. `onNavigate` fecha o drawer ao clicar num link.
+ */
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const { usuario, logout } = useAuth();
   const nome = usuario?.nome ?? "Administrador";
   const inicial = nome.charAt(0).toUpperCase();
 
   const sair = async () => {
+    onNavigate?.();
     await logout();
     navigate("/admin/login", { replace: true });
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-surface-dark text-surface-dark-foreground border-r border-white/5">
+    <>
       <div className="px-6 pt-7 pb-5 border-b border-white/5">
         <Logo variant="inverse" />
       </div>
@@ -81,7 +89,7 @@ export function Sidebar() {
       </div>
       <nav className="px-3 flex flex-col gap-0.5">
         {NAV_OPERACAO.map((item) => (
-          <NavItem key={item.to} {...item} />
+          <NavItem key={item.to} {...item} onNavigate={onNavigate} />
         ))}
       </nav>
 
@@ -92,7 +100,7 @@ export function Sidebar() {
       </div>
       <nav className="px-3 flex flex-col gap-0.5 flex-1">
         {NAV_CONTEUDO.map((item) => (
-          <NavItem key={item.to} {...item} />
+          <NavItem key={item.to} {...item} onNavigate={onNavigate} />
         ))}
       </nav>
 
@@ -101,6 +109,7 @@ export function Sidebar() {
           to="/admin/configuracoes"
           label="Configurações"
           icon={Settings}
+          onNavigate={onNavigate}
         />
       </div>
 
@@ -113,9 +122,7 @@ export function Sidebar() {
             <div className="text-[13px] font-semibold text-white truncate">
               {nome}
             </div>
-            <div className="text-[11px] text-white/50 truncate">
-              Super Admin
-            </div>
+            <div className="text-[11px] text-white/50 truncate">Super Admin</div>
           </div>
           <button
             onClick={sair}
@@ -126,6 +133,15 @@ export function Sidebar() {
           </button>
         </div>
       </div>
+    </>
+  );
+}
+
+/** Sidebar fixa do desktop (≥ lg). No mobile usa-se o drawer no AdminShell. */
+export function Sidebar() {
+  return (
+    <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-surface-dark text-surface-dark-foreground border-r border-white/5">
+      <SidebarContent />
     </aside>
   );
 }

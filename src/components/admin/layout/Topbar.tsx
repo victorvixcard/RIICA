@@ -1,4 +1,5 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Menu } from "lucide-react";
+import { useMobileNav } from "./mobile-nav";
 
 interface TopbarProps {
   title: string;
@@ -7,15 +8,26 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, subtitle, actions }: TopbarProps) {
+  const mobileNav = useMobileNav();
+
   return (
     <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-md border-b border-border">
-      <div className="flex items-center gap-6 px-6 lg:px-10 h-16">
+      <div className="flex items-center gap-3 sm:gap-6 px-4 sm:px-6 lg:px-10 h-16">
+        {/* Hambúrguer — só no mobile/tablet, abre a sidebar como drawer */}
+        <button
+          onClick={() => mobileNav?.open()}
+          aria-label="Abrir menu"
+          className="lg:hidden h-9 w-9 -ml-1 rounded-md flex items-center justify-center text-foreground hover:bg-muted transition-colors shrink-0"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-lg font-bold text-foreground truncate">
+          <h1 className="font-display text-base sm:text-lg font-bold text-foreground truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[12px] text-muted-foreground truncate">
+            <p className="hidden sm:block text-[12px] text-muted-foreground truncate">
               {subtitle}
             </p>
           )}
@@ -35,7 +47,7 @@ export function Topbar({ title, subtitle, actions }: TopbarProps) {
 
         <button
           aria-label="Notificações"
-          className="relative h-9 w-9 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="relative h-9 w-9 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
         >
           <Bell className="h-4 w-4" />
           <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
