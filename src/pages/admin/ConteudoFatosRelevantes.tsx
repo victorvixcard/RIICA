@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
+import { UploadArquivo } from "@/components/admin/UploadArquivo";
 import { useContent } from "@/store/content";
 import type { FatoRelevante } from "@/store/types";
 import { cn } from "@/lib/utils";
@@ -353,6 +354,26 @@ export function ConteudoFatosRelevantes() {
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   Quando preenchido, o card vira um hiperlink na home.
                 </p>
+
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    ou anexe um PDF para download
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <div className="mt-3">
+                  <UploadArquivo
+                    value={
+                      form.url.includes("/storage/v1/object/public/")
+                        ? form.url
+                        : undefined
+                    }
+                    prefix="comunicados"
+                    onUploaded={(r) => setForm({ ...form, url: r.url })}
+                    onClear={() => setForm({ ...form, url: "" })}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

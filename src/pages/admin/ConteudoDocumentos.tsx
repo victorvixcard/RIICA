@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -7,13 +7,13 @@ import {
   Trash2,
   Save,
   X,
-  Upload,
   FileText,
   Eye,
   EyeOff,
   Filter,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
+import { UploadArquivo } from "@/components/admin/UploadArquivo";
 import { useContent } from "@/store/content";
 import {
   CATEGORIA_DOC_LABEL,
@@ -71,7 +71,6 @@ function fmtData(iso: string) {
 
 export function ConteudoDocumentos() {
   const { state, dispatch } = useContent();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [editando, setEditando] = useState<string | "novo" | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [filtroCat, setFiltroCat] = useState<CategoriaDoc | "todos">("todos");
@@ -107,17 +106,6 @@ export function ConteudoDocumentos() {
   const fechar = () => {
     setEditando(null);
     setForm(EMPTY);
-  };
-
-  const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setForm((f) => ({
-      ...f,
-      arquivo: file.name,
-      tamanho: file.size,
-      titulo: f.titulo || file.name.replace(/\.[^.]+$/, ""),
-    }));
   };
 
   const salvar = (e: React.FormEvent) => {
@@ -340,10 +328,10 @@ export function ConteudoDocumentos() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-lg border border-warning/30 bg-warning/5 p-4 text-[12px] text-foreground">
-            <strong>Modo mock:</strong> os arquivos selecionados aqui ficam só
-            como metadados (nome + tamanho). O conteúdo binário do PDF ainda
-            não é armazenado — isso vem com o backend (S3/R2).
+          <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-[12px] text-foreground">
+            <strong>Upload ativo:</strong> os arquivos enviados aqui sobem para o
+            Storage do Supabase (bucket público <code>documentos</code>) e ficam
+            disponíveis para download direto no portal.
           </div>
         </div>
       </main>
@@ -374,46 +362,27 @@ export function ConteudoDocumentos() {
             </div>
 
             <form onSubmit={salvar} className="px-6 py-5 space-y-4">
-              {/* Upload area */}
+              {/* Upload de arquivo — sobe pro Storage e gera link de download */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
                   Arquivo
                 </label>
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="w-full rounded-md border-2 border-dashed border-border bg-background px-5 py-6 hover:border-primary/40 hover:bg-primary/5 transition-colors flex items-center gap-4 text-left"
-                >
-                  <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <Upload className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {form.arquivo ? (
-                      <>
-                        <div className="text-[13px] font-semibold text-foreground truncate">
-                          {form.arquivo}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {fmtBytes(form.tamanho)} — clique para trocar
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-[13px] font-semibold text-foreground">
-                          Clique para selecionar um arquivo
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          PDF, XLSX, DOCX — qualquer formato
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  onChange={onSelectFile}
-                  className="hidden"
+                <UploadArquivo
+                  value={form.arquivo || undefined}
+                  nomeAtual={
+                    form.arquivo ? `${form.titulo || "Documento"} (${fmtBytes(form.tamanho)})` : undefined
+                  }
+                  prefix="documentos"
+                  accept=".pdf,.xlsx,.xls,.doc,.docx"
+                  onUploaded={(r) =>
+                    setForm((f) => ({
+                      ...f,
+                      arquivo: r.url,
+                      tamanho: r.tamanho,
+                      titulo: f.titulo || r.nome.replace(/\.[^.]+$/, ""),
+                    }))
+                  }
+                  onClear={() => setForm((f) => ({ ...f, arquivo: "", tamanho: 0 }))}
                 />
               </div>
 
