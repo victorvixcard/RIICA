@@ -76,7 +76,6 @@ function SectionCard({
 
 export function ConteudoOverview() {
   const { state, refetch } = useContent();
-  const comunicadosPub = state.comunicados.filter((c) => c.publicado).length;
   const eventosPub = state.eventos.filter((e) => e.publicado).length;
   const docsPub = state.documentos.filter((d) => d.publico).length;
   const fatosPub = state.fatosRelevantes.filter((f) => f.publicado).length;
@@ -143,15 +142,6 @@ export function ConteudoOverview() {
               Blocos do portal
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <SectionCard
-                to="/admin/conteudo/comunicados"
-                icon={Megaphone}
-                title="Comunicados"
-                description="Últimas atualizações exibidas na home — fatos relevantes, dividendos, aquisições, atas."
-                count={state.comunicados.length}
-                countLabel="cadastrados"
-                status={`${comunicadosPub} publicados`}
-              />
               <SectionCard
                 to="/admin/conteudo/eventos"
                 icon={CalendarDays}

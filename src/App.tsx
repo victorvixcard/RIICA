@@ -25,7 +25,6 @@ import { Templates } from "@/pages/admin/Templates";
 import { Historico } from "@/pages/admin/Historico";
 import { Configuracoes } from "@/pages/admin/Configuracoes";
 import { ConteudoOverview } from "@/pages/admin/Conteudo";
-import { ConteudoComunicados } from "@/pages/admin/ConteudoComunicados";
 import { ConteudoEventos } from "@/pages/admin/ConteudoEventos";
 import { ConteudoDocumentos } from "@/pages/admin/ConteudoDocumentos";
 import { ConteudoKit } from "@/pages/admin/ConteudoKit";
@@ -108,7 +107,6 @@ function App() {
 
               {/* Conteúdo do site */}
               <Route path="conteudo" element={<ConteudoOverview />} />
-              <Route path="conteudo/comunicados" element={<ConteudoComunicados />} />
               <Route path="conteudo/eventos" element={<ConteudoEventos />} />
               <Route path="conteudo/documentos" element={<ConteudoDocumentos />} />
               <Route path="conteudo/kit" element={<ConteudoKit />} />
