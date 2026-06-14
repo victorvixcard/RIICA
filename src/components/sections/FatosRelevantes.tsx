@@ -132,9 +132,13 @@ export function FatosRelevantes() {
                     {fato.titulo}
                   </h4>
                   {fato.resumo && (
-                    <p className="mt-2 text-[13px] lg:text-[14px] text-muted-foreground leading-relaxed">
-                      {fato.resumo}
-                    </p>
+                    <div className="mt-2 text-[13px] lg:text-[14px] text-muted-foreground leading-relaxed space-y-3">
+                      {fato.resumo
+                        .split(/\n\n+/)
+                        .map((p, idx) => (
+                          <p key={idx}>{p}</p>
+                        ))}
+                    </div>
                   )}
                 </div>
               </div>
