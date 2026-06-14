@@ -99,16 +99,41 @@ export async function setStatusUsuario(id: string, status: StatusUsuario) {
 }
 
 /**
- * Define/reseta a senha do usuário.
- * ⚠️ Fase 1 (placeholder): grava em senha_temp. Na Fase 2 isto chamará
- * o Supabase Auth (senha hasheada / reset por e-mail).
+ * Define/reseta a senha do usuário no Supabase Auth.
+ *
+ * O fluxo passa por um endpoint server-side (Vite middleware em dev,
+ * Vercel Serverless Function em prod) que usa a service_role key
+ * para chamar `auth.admin.updateUserById`. O JWT do super_admin
+ * é enviado no header Authorization para autorização.
  */
 export async function definirSenha(id: string, novaSenha: string) {
-  const { error } = await supabase
-    .from("usuarios")
-    .update({ senha_temp: novaSenha, senha_definida: true })
-    .eq("id", id);
-  if (error) throw error;
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error("Você precisa estar logado para resetar senhas.");
+  }
+
+  const resp = await fetch("/api/admin/reset-senha", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ usuarioId: id, novaSenha }),
+  });
+
+  if (!resp.ok) {
+    let msg = `Falha ao resetar senha (${resp.status}).`;
+    try {
+      const json = (await resp.json()) as { error?: string };
+      if (json.error) msg = json.error;
+    } catch {
+      // resposta sem JSON — usa mensagem genérica
+    }
+    throw new Error(msg);
+  }
 }
 
 export interface ResultadoEnvio {

@@ -10,6 +10,9 @@ import {
   User,
   Power,
   Mail,
+  Eye,
+  EyeOff,
+  AlertCircle,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { cn } from "@/lib/utils";
@@ -55,6 +58,9 @@ export function Usuarios() {
   const [form, setForm] = useState<NovoUsuario>(EMPTY);
   const [senhaModal, setSenhaModal] = useState<Usuario | null>(null);
   const [novaSenha, setNovaSenha] = useState("");
+  const [verSenha, setVerSenha] = useState(false);
+  const [erroSenha, setErroSenha] = useState("");
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
 
   const carregar = async () => {
     try {
@@ -125,16 +131,31 @@ export function Usuarios() {
     await carregar();
   };
 
-  const salvarSenha = async () => {
-    if (!senhaModal) return;
-    if (novaSenha.trim().length < 4) {
-      alert("A senha deve ter ao menos 4 caracteres.");
-      return;
-    }
-    await definirSenha(senhaModal.id, novaSenha.trim());
+  const fecharModalSenha = () => {
     setSenhaModal(null);
     setNovaSenha("");
-    await carregar();
+    setVerSenha(false);
+    setErroSenha("");
+    setSalvandoSenha(false);
+  };
+
+  const salvarSenha = async () => {
+    if (!senhaModal) return;
+    setErroSenha("");
+    if (novaSenha.trim().length < 6) {
+      setErroSenha("A senha deve ter ao menos 6 caracteres.");
+      return;
+    }
+    setSalvandoSenha(true);
+    try {
+      await definirSenha(senhaModal.id, novaSenha.trim());
+      fecharModalSenha();
+      await carregar();
+    } catch (e) {
+      setErroSenha(e instanceof Error ? e.message : "Falha ao resetar senha.");
+    } finally {
+      setSalvandoSenha(false);
+    }
   };
 
   return (
@@ -304,29 +325,74 @@ export function Usuarios() {
 
       {/* Modal senha */}
       {senhaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={(ev) => ev.target === ev.currentTarget && setSenhaModal(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4"
+          onClick={(ev) => ev.target === ev.currentTarget && fecharModalSenha()}
+        >
           <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-elevated overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <h3 className="font-display text-base font-bold text-foreground inline-flex items-center gap-2">
                 <KeyRound className="h-4 w-4 text-primary" />
                 {senhaModal.senhaDefinida ? "Resetar senha" : "Definir senha"}
               </h3>
-              <button onClick={() => setSenhaModal(null)} aria-label="Fechar" className="h-9 w-9 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <button
+                onClick={fecharModalSenha}
+                aria-label="Fechar"
+                className="h-9 w-9 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="px-6 py-5 space-y-4">
               <p className="text-[13px] text-muted-foreground">
-                Definindo nova senha para <strong className="text-foreground">{senhaModal.nome}</strong>.
+                Definindo nova senha para{" "}
+                <strong className="text-foreground">{senhaModal.nome}</strong> (
+                <span className="font-mono">{senhaModal.email}</span>).
               </p>
-              <input type="text" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Nova senha (mín. 4 caracteres)" className="w-full rounded-md border border-input bg-background px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+              <div className="relative">
+                <input
+                  type={verSenha ? "text" : "password"}
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  placeholder="Nova senha (mín. 6 caracteres)"
+                  autoFocus
+                  className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVerSenha((v) => !v)}
+                  aria-label={verSenha ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  {verSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {erroSenha && (
+                <div className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-[12px] text-destructive">
+                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  {erroSenha}
+                </div>
+              )}
               <p className="text-[11px] text-muted-foreground">
-                ⚠️ Fase 1: senha provisória (placeholder). Na Fase 2 será integrada ao login real com criptografia.
+                A senha será sincronizada com o login real do Supabase Auth. O
+                usuário poderá entrar imediatamente com a nova senha.
               </p>
               <div className="flex items-center justify-end gap-3 pt-2 border-t border-border">
-                <button onClick={() => setSenhaModal(null)} className="px-4 py-2 text-[12px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
-                <button onClick={salvarSenha} className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors">
-                  <Save className="h-3.5 w-3.5" />Salvar senha
+                <button
+                  onClick={fecharModalSenha}
+                  disabled={salvandoSenha}
+                  className="px-4 py-2 text-[12px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={salvarSenha}
+                  disabled={salvandoSenha}
+                  className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-deep transition-colors disabled:opacity-60"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  {salvandoSenha ? "Salvando..." : "Salvar senha"}
                 </button>
               </div>
             </div>

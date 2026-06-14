@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight, Lock, Mail, ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowRight, Lock, Mail, ArrowLeft, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/store/auth";
 
@@ -9,6 +9,7 @@ export function LoginAdmin() {
   const { loginAdmin } = useAuth();
   const [email, setEmail] = useState("vitao@grupoica.com.br");
   const [senha, setSenha] = useState("");
+  const [verSenha, setVerSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -99,13 +100,22 @@ export function LoginAdmin() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
-                  type="password"
+                  type={verSenha ? "text" : "password"}
                   required
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-md border border-input bg-card pl-10 pr-3 py-2.5 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-shadow"
+                  className="w-full rounded-md border border-input bg-card pl-10 pr-10 py-2.5 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-shadow"
                 />
+                <button
+                  type="button"
+                  onClick={() => setVerSenha((v) => !v)}
+                  aria-label={verSenha ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  {verSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
