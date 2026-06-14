@@ -35,6 +35,7 @@ import { ConteudoAcoesRapidas } from "@/pages/admin/ConteudoAcoesRapidas";
 import { ConteudoRodape } from "@/pages/admin/ConteudoRodape";
 import { ConteudoFaq } from "@/pages/admin/ConteudoFaq";
 import { ConteudoFatosRelevantes } from "@/pages/admin/ConteudoFatosRelevantes";
+import { ScrollToHash } from "@/components/ScrollToHash";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
       <ContentProvider>
       <InvestorProvider>
         <BrowserRouter>
+          <ScrollToHash />
           <Routes>
             {/* Portal R.I. público */}
             <Route path="/" element={<PortalRI />} />

@@ -74,7 +74,7 @@ export function FatosRelevantes() {
   const isDemo = reais.length === 0;
 
   return (
-    <section className="relative bg-background">
+    <section id="comunicados" className="relative bg-background scroll-mt-32">
       {/* Faixa escura com título */}
       <div className="relative bg-surface-dark text-surface-dark-foreground">
         <div className="absolute inset-0 grid-pattern opacity-10" />
