@@ -45,7 +45,7 @@ export function QuemSomos() {
               className="space-y-6 text-[16px] lg:text-[17px] leading-relaxed text-muted-foreground"
             >
               <p>
-                Há mais de 30 anos, o <strong className="text-foreground">Grupo ICA</strong> conecta pessoas a
+                Há mais de 11 anos, o <strong className="text-foreground">Grupo ICA</strong> conecta pessoas a
                 oportunidades que promovem dignidade, desenvolvimento e
                 realização. Cada solução que entregamos, cada parceria que
                 fortalecemos e cada relacionamento que construímos tem um
