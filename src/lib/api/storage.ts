@@ -63,7 +63,40 @@ export async function uploadArquivo(
   return { url: data.publicUrl, path, tamanho: file.size, nome: file.name };
 }
 
-/** Remove um arquivo do bucket pelo caminho (best-effort). */
+/** Remove um arquivo do bucket pelo caminho (best-effort, não lança erro). */
 export async function removerArquivo(path: string): Promise<void> {
-  await supabase.storage.from(BUCKET).remove([path]);
+  try {
+    await supabase.storage.from(BUCKET).remove([path]);
+  } catch (e) {
+    console.warn("[storage] falha ao remover arquivo (best-effort):", path, e);
+  }
+}
+
+/**
+ * Extrai o path do objeto a partir de uma URL pública do Supabase Storage.
+ * Retorna null se a URL não for do nosso bucket (ex: URL externa digitada
+ * pelo admin, "#" placeholder, ou string vazia).
+ *
+ * Ex:
+ *   "https://xxx.supabase.co/storage/v1/object/public/documentos/comunicados/ata.pdf"
+ *   → "comunicados/ata.pdf"
+ */
+export function pathDeUrlPublica(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i < 0) return null;
+  const path = url.slice(i + marker.length);
+  // Sanity check — não deixa passar URL com query string ou fragmento.
+  return path.split(/[?#]/)[0] || null;
+}
+
+/**
+ * Remove o arquivo apenas se ele estiver hospedado no nosso bucket Storage.
+ * URLs externas (https://outrodominio.com/x.pdf) ou placeholders ("#") são
+ * ignoradas silenciosamente.
+ */
+export async function removerSeNossoStorage(url: string | null | undefined): Promise<void> {
+  const path = pathDeUrlPublica(url);
+  if (path) await removerArquivo(path);
 }

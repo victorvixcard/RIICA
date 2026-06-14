@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Filter,
+  AlertCircle,
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { UploadArquivo } from "@/components/admin/UploadArquivo";
@@ -74,6 +75,7 @@ export function ConteudoDocumentos() {
   const [editando, setEditando] = useState<string | "novo" | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [filtroCat, setFiltroCat] = useState<CategoriaDoc | "todos">("todos");
+  const [erroForm, setErroForm] = useState("");
 
   const docs = useMemo(() => {
     const base = [...state.documentos].sort((a, b) =>
@@ -86,6 +88,7 @@ export function ConteudoDocumentos() {
 
   const abrirNovo = () => {
     setForm(EMPTY);
+    setErroForm("");
     setEditando("novo");
   };
 
@@ -100,21 +103,38 @@ export function ConteudoDocumentos() {
       publico: d.publico,
       tag: d.tag ?? "",
     });
+    setErroForm("");
     setEditando(d.id);
   };
 
   const fechar = () => {
     setEditando(null);
     setForm(EMPTY);
+    setErroForm("");
   };
+
+  // Fecha modal ao pressionar ESC.
+  useEffect(() => {
+    if (!editando) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") fechar();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editando]);
 
   const salvar = (e: React.FormEvent) => {
     e.preventDefault();
+    setErroForm("");
+    if (!form.arquivo.trim()) {
+      setErroForm("Anexe um arquivo (PDF, planilha ou Word) antes de salvar.");
+      return;
+    }
     const payload = {
       titulo: form.titulo.trim(),
       categoria: form.categoria,
       periodo: form.periodo.trim() || undefined,
-      arquivo: form.arquivo.trim() || "documento-sem-arquivo.pdf",
+      arquivo: form.arquivo.trim(),
       tamanho: form.tamanho || undefined,
       dataPublicacao: form.dataPublicacao,
       publico: form.publico,
@@ -365,7 +385,7 @@ export function ConteudoDocumentos() {
               {/* Upload de arquivo — sobe pro Storage e gera link de download */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                  Arquivo
+                  Arquivo <span className="text-destructive">*</span>
                 </label>
                 <UploadArquivo
                   value={form.arquivo || undefined}
@@ -480,6 +500,13 @@ export function ConteudoDocumentos() {
                   </span>
                 </label>
               </div>
+
+              {erroForm && (
+                <div className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-[12px] text-destructive">
+                  <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  {erroForm}
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <button

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { removerSeNossoStorage } from "@/lib/api/storage";
 import type {
   Comunicado,
   ContentState,
@@ -328,15 +329,37 @@ export async function createFatoRelevante(payload: Omit<FatoRelevante, "id">) {
   if (error) throw error;
 }
 export async function updateFatoRelevante(f: FatoRelevante) {
+  // Detecta troca de PDF: se a URL anterior era do nosso Storage e mudou,
+  // remove o arquivo antigo para não acumular órfãos.
+  const { data: anterior } = await supabase
+    .from("fatos_relevantes")
+    .select("url")
+    .eq("id", f.id)
+    .maybeSingle();
+  const urlAntiga = anterior?.url as string | null | undefined;
+
   const { error } = await supabase
     .from("fatos_relevantes")
     .update(fromFatoRelevante(f))
     .eq("id", f.id);
   if (error) throw error;
+
+  if (urlAntiga && urlAntiga !== f.url) {
+    await removerSeNossoStorage(urlAntiga);
+  }
 }
 export async function deleteFatoRelevante(id: string) {
+  // Captura URL antes de deletar para limpar o PDF anexo no Storage.
+  const { data: anterior } = await supabase
+    .from("fatos_relevantes")
+    .select("url")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("fatos_relevantes").delete().eq("id", id);
   if (error) throw error;
+
+  await removerSeNossoStorage(anterior?.url as string | null | undefined);
 }
 
 // ============================================================
@@ -379,12 +402,34 @@ export async function createDocumento(payload: Omit<Documento, "id">) {
   if (error) throw error;
 }
 export async function updateDocumento(d: Documento) {
+  // Detecta troca de arquivo: se o anterior era do nosso Storage e mudou,
+  // remove o arquivo antigo para não acumular órfãos.
+  const { data: anterior } = await supabase
+    .from("documentos")
+    .select("arquivo")
+    .eq("id", d.id)
+    .maybeSingle();
+  const arquivoAntigo = anterior?.arquivo as string | null | undefined;
+
   const { error } = await supabase.from("documentos").update(fromDocumento(d)).eq("id", d.id);
   if (error) throw error;
+
+  if (arquivoAntigo && arquivoAntigo !== d.arquivo) {
+    await removerSeNossoStorage(arquivoAntigo);
+  }
 }
 export async function deleteDocumento(id: string) {
+  // Captura URL do arquivo antes de deletar para limpar o PDF no Storage.
+  const { data: anterior } = await supabase
+    .from("documentos")
+    .select("arquivo")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("documentos").delete().eq("id", id);
   if (error) throw error;
+
+  await removerSeNossoStorage(anterior?.arquivo as string | null | undefined);
 }
 
 // ============================================================

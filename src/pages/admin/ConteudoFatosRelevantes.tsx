@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Topbar } from "@/components/admin/layout/Topbar";
 import { UploadArquivo } from "@/components/admin/UploadArquivo";
+import { pathDeUrlPublica } from "@/lib/api/storage";
 import { useContent } from "@/store/content";
 import type { FatoRelevante } from "@/store/types";
 import { cn } from "@/lib/utils";
@@ -332,12 +333,16 @@ export function ConteudoFatosRelevantes() {
                   Resumo (opcional)
                 </label>
                 <textarea
-                  rows={3}
+                  rows={5}
                   value={form.resumo}
                   onChange={(e) => setForm({ ...form, resumo: e.target.value })}
-                  placeholder="Descrição curta exibida abaixo do título."
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 resize-none"
+                  placeholder={"Descrição exibida abaixo do título.\n\nPara separar parágrafos, deixe uma linha em branco entre eles (pressione Enter duas vezes)."}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 resize-y leading-relaxed"
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Quebra dupla de linha (<kbd className="px-1 py-0.5 rounded bg-muted text-foreground/80 font-mono text-[10px]">Enter</kbd>{" "}
+                  <kbd className="px-1 py-0.5 rounded bg-muted text-foreground/80 font-mono text-[10px]">Enter</kbd>) cria parágrafo separado na home.
+                </p>
               </div>
 
               <div>
@@ -364,11 +369,7 @@ export function ConteudoFatosRelevantes() {
                 </div>
                 <div className="mt-3">
                   <UploadArquivo
-                    value={
-                      form.url.includes("/storage/v1/object/public/")
-                        ? form.url
-                        : undefined
-                    }
+                    value={pathDeUrlPublica(form.url) ? form.url : undefined}
                     prefix="comunicados"
                     onUploaded={(r) => setForm({ ...form, url: r.url })}
                     onClear={() => setForm({ ...form, url: "" })}
