@@ -198,7 +198,7 @@ export const SEED: ContentState = {
   navItems: [
     { id: "nav-1", label: "Governança Corporativa", url: "#governanca", ordem: 0, visivel: true },
     { id: "nav-2", label: "Informações Financeiras", url: "/demonstracoes", ordem: 1, visivel: true },
-    { id: "nav-3", label: "Comunicados, Eventos e Replays", url: "#comunicados", ordem: 2, visivel: true },
+    { id: "nav-3", label: "Comunicados", url: "/comunicados", ordem: 2, visivel: true },
     { id: "nav-4", label: "Ação", url: "#acao", ordem: 3, visivel: true },
     { id: "nav-5", label: "Serviços aos Investidores", url: "#servicos", ordem: 4, visivel: true },
   ],
@@ -225,7 +225,7 @@ export const SEED: ContentState = {
       titulo: "Investidores",
       links: [
         { id: "fl-5", label: "Informações financeiras", url: "/demonstracoes" },
-        { id: "fl-6", label: "Comunicados ao mercado", url: "#comunicados" },
+        { id: "fl-6", label: "Comunicados ao mercado", url: "/comunicados" },
         { id: "fl-7", label: "Agenda do investidor", url: "#eventos" },
         { id: "fl-8", label: "FAQ", url: "#faqs" },
       ],
