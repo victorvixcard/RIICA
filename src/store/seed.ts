@@ -8,40 +8,48 @@ export const SEED: ContentState = {
     {
       id: "com-001",
       data: "2026-05-19",
+      tag: "DIVIDENDOS",
       titulo:
         "Grupo ICA anuncia novo programa de dividendos extraordinários",
       resumo:
         "Conselho aprovou distribuição de R$ 0,42 por ação a ser paga em 30/06.",
       destaque: true,
       publicado: true,
+      ordem: 0,
     },
     {
       id: "com-002",
       data: "2026-05-18",
+      tag: "RESULTADOS",
       titulo: "Grupo ICA divulga resultados financeiros do 1T26",
       resumo:
         "Receita líquida cresceu 12,8% no comparativo anual. EBITDA ajustado de R$ 184M.",
       documentoId: "doc-001",
       destaque: true,
       publicado: true,
+      ordem: 0,
     },
     {
       id: "com-003",
       data: "2026-05-12",
+      tag: "AVISO AO MERCADO",
       titulo:
         "Comunicado ao mercado: aquisição estratégica no segmento de varejo",
       resumo:
         "Aquisição de 60% da Capixaba Distribuidora aprovada pelo CADE.",
       destaque: true,
       publicado: true,
+      ordem: 0,
     },
     {
       id: "com-004",
       data: "2026-04-30",
+      tag: "ATA SOCIETÁRIA",
       titulo: "Reunião do Conselho de Administração — ata disponível",
       documentoId: "doc-004",
       destaque: true,
       publicado: true,
+      ordem: 0,
     },
   ],
   eventos: [
