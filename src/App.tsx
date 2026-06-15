@@ -34,6 +34,7 @@ import { ConteudoAcoesRapidas } from "@/pages/admin/ConteudoAcoesRapidas";
 import { ConteudoRodape } from "@/pages/admin/ConteudoRodape";
 import { ConteudoFaq } from "@/pages/admin/ConteudoFaq";
 import { ConteudoFatosRelevantes } from "@/pages/admin/ConteudoFatosRelevantes";
+import { ConteudoComunicados } from "@/pages/admin/ConteudoComunicados";
 import { ScrollToHash } from "@/components/ScrollToHash";
 
 function App() {
@@ -116,6 +117,7 @@ function App() {
               <Route path="conteudo/rodape" element={<ConteudoRodape />} />
               <Route path="conteudo/faq" element={<ConteudoFaq />} />
               <Route path="conteudo/fatos-relevantes" element={<ConteudoFatosRelevantes />} />
+              <Route path="conteudo/comunicados" element={<ConteudoComunicados />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

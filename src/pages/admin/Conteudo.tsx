@@ -79,6 +79,7 @@ export function ConteudoOverview() {
   const eventosPub = state.eventos.filter((e) => e.publicado).length;
   const docsPub = state.documentos.filter((d) => d.publico).length;
   const fatosPub = state.fatosRelevantes.filter((f) => f.publicado).length;
+  const comunicadosPub = state.comunicados.filter((c) => c.publicado).length;
 
   const onRecarregar = () => {
     void refetch();
@@ -221,6 +222,15 @@ export function ConteudoOverview() {
                 count={state.fatosRelevantes.length}
                 countLabel="cadastrados"
                 status={`${fatosPub} publicados`}
+              />
+              <SectionCard
+                to="/admin/conteudo/comunicados"
+                icon={Megaphone}
+                title="Comunicados"
+                description="Comunicados ao mercado exibidos na página dedicada — independente de Fatos Relevantes."
+                count={state.comunicados.length}
+                countLabel="cadastrados"
+                status={`${comunicadosPub} publicados`}
               />
             </div>
           </div>
