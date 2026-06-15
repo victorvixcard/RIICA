@@ -35,6 +35,7 @@ import { ConteudoRodape } from "@/pages/admin/ConteudoRodape";
 import { ConteudoFaq } from "@/pages/admin/ConteudoFaq";
 import { ConteudoFatosRelevantes } from "@/pages/admin/ConteudoFatosRelevantes";
 import { ConteudoComunicados } from "@/pages/admin/ConteudoComunicados";
+import { Comunicados } from "@/pages/Comunicados";
 import { ScrollToHash } from "@/components/ScrollToHash";
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
             <Route path="/demonstracoes" element={<Demonstracoes />} />
             <Route path="/quem-somos" element={<QuemSomos />} />
             <Route path="/fale-com-ri" element={<FaleComRi />} />
+            <Route path="/comunicados" element={<Comunicados />} />
 
             {/* Páginas placeholder (em construção / em breve) */}
             <Route
