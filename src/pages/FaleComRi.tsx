@@ -4,11 +4,12 @@ import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 
-// Dados de contato (placeholder — editar quando os reais estiverem disponíveis).
+// Dados de contato oficiais (sede da Companhia em Itajaí/SC).
 const CONTATO = {
-  email: "ri@icaportalri.com.br",
+  email: "ri@icagrupo.com.br",
   telefone: "+55 (71) 3000-0000",
-  endereco: "Av. Tancredo Neves, 1000 — Salvador/BA — CEP 41820-021",
+  endereco:
+    "Rua Luci Canziani, 100, área A 1B — Bairro Praia Brava — Itajaí/SC — CEP 88.306-700",
   horario: "Segunda a sexta, das 9h às 18h",
 };
 
