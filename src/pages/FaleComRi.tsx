@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
+import { Mail, MapPin, Clock, Send } from "lucide-react";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 
 // Dados de contato oficiais (sede da Companhia em Itajaí/SC).
 const CONTATO = {
   email: "ri@icagrupo.com.br",
-  telefone: "+55 (71) 3000-0000",
   endereco:
     "Rua Luci Canziani, 100, área A 1B — Bairro Praia Brava — Itajaí/SC — CEP 88.306-700",
   horario: "Segunda a sexta, das 9h às 18h",
@@ -97,7 +96,6 @@ export function FaleComRi() {
                 Canais de atendimento
               </h2>
               <ContatoCard icon={Mail} titulo="E-mail" valor={CONTATO.email} href={`mailto:${CONTATO.email}`} />
-              <ContatoCard icon={Phone} titulo="Telefone" valor={CONTATO.telefone} href={`tel:+5571300000000`} />
               <ContatoCard icon={MapPin} titulo="Endereço" valor={CONTATO.endereco} />
               <ContatoCard icon={Clock} titulo="Horário de atendimento" valor={CONTATO.horario} />
             </div>
