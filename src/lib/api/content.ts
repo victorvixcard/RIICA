@@ -36,14 +36,12 @@ interface DocumentoRow {
 interface ComunicadoRow {
   id: string;
   data: string;
-  tag: string;
   titulo: string;
   resumo: string | null;
   documento_id: string | null;
   link: string | null;
   destaque: boolean;
   publicado: boolean;
-  ordem: number;
 }
 
 interface EventoRow {
@@ -89,14 +87,12 @@ function toComunicado(r: ComunicadoRow): Comunicado {
   return {
     id: r.id,
     data: r.data,
-    tag: r.tag,
     titulo: r.titulo,
     resumo: r.resumo ?? undefined,
     documentoId: r.documento_id ?? undefined,
     link: r.link ?? undefined,
     destaque: r.destaque,
     publicado: r.publicado,
-    ordem: r.ordem,
   };
 }
 
@@ -157,14 +153,12 @@ function fromDocumento(d: Omit<Documento, "id"> | Documento) {
 function fromComunicado(c: Omit<Comunicado, "id"> | Comunicado) {
   return {
     data: c.data,
-    tag: c.tag,
     titulo: c.titulo,
     resumo: c.resumo ?? null,
     documento_id: c.documentoId ?? null,
     link: c.link ?? null,
     destaque: c.destaque,
     publicado: c.publicado,
-    ordem: c.ordem,
   };
 }
 

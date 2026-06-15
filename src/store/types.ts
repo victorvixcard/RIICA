@@ -43,19 +43,15 @@ export interface Documento {
 export interface Comunicado {
   id: string;
   data: string; // ISO
-  /** Categoria/tag exibida acima do título — ex: "COMUNICADO", "AVISO", "AGE". */
-  tag: string;
   titulo: string;
   resumo?: string;
-  /** Documento vinculado (opcional, schema legado). */
+  /** Documento vinculado (opcional) */
   documentoId?: string;
-  /** URL do PDF (Storage) ou link externo. */
+  /** Link externo (opcional, alternativa ao documento) */
   link?: string;
-  /** Se aparece em destaque (não usado na lista nova, mantido por compat). */
+  /** Se aparece em destaque na home */
   destaque: boolean;
   publicado: boolean;
-  /** Desempate na ordenação quando duas datas coincidem. */
-  ordem: number;
 }
 
 export type TipoEvento =
