@@ -152,7 +152,7 @@ export function LoginInvestidor() {
             <p className="text-[12px] text-muted-foreground">
               Ainda não recebeu seus dados de acesso?{" "}
               <a
-                href="mailto:ri@grupoica.com.br"
+                href="mailto:fundo@icainvest.com.br"
                 className="text-primary hover:text-primary-deep font-semibold"
               >
                 Fale com o RI
