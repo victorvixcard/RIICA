@@ -6,7 +6,7 @@ import { Footer } from "@/components/sections/Footer";
 
 // Dados de contato oficiais (sede da Companhia em Itajaí/SC).
 const CONTATO = {
-  email: "ri@icagrupo.com.br",
+  email: "fundo@icainvest.com.br",
   endereco:
     "Rua Luci Canziani, 100, área A 1B — Bairro Praia Brava — Itajaí/SC — CEP 88.306-700",
   horario: "Segunda a sexta, das 9h às 18h",

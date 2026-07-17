@@ -86,7 +86,7 @@ function App() {
               element={
                 <PaginaEmBreve
                   titulo="Formas de contato"
-                  mensagem="Em breve disponibilizaremos os canais de atendimento ao investidor. Enquanto isso, escreva para ri@grupoica.com.br."
+                  mensagem="Em breve disponibilizaremos os canais de atendimento ao investidor. Enquanto isso, escreva para fundo@icainvest.com.br."
                 />
               }
             />
