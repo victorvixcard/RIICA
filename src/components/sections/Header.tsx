@@ -60,13 +60,13 @@ export function Header() {
             >
               Institucional
             </a>
-            <Link
-              to="/fale-com-ri"
+            <a
+              href="mailto:fundo@icainvest.com.br?subject=Contato%20%E2%80%94%20Portal%20RI%20Grupo%20ICA"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary-deep transition-colors shadow-brand"
             >
               <Mail className="h-3.5 w-3.5" />
               Fale com RI
-            </Link>
+            </a>
             <div className="flex items-center gap-0.5 rounded-full border border-border px-0.5 text-[11px] font-semibold">
               <button className="rounded-full bg-foreground px-2.5 py-1 text-background">
                 PT
@@ -186,14 +186,14 @@ export function Header() {
               </nav>
 
               <div className="px-5 py-5 border-t border-border space-y-3">
-                <Link
-                  to="/fale-com-ri"
+                <a
+                  href="mailto:fundo@icainvest.com.br?subject=Contato%20%E2%80%94%20Portal%20RI%20Grupo%20ICA"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-[12px] font-bold uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary-deep transition-colors shadow-brand"
                 >
                   <Mail className="h-4 w-4" />
                   Fale com RI
-                </Link>
+                </a>
                 <a
                   href={state.config.institucionalUrl}
                   target="_blank"
